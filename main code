@@ -1,0 +1,419 @@
+#General Dev Log
+"""
+PROGRESS: DRAFT 1 DONE
+    - SELL ready!
+    - Excel ready!
+    - Draft 2 (RENT check + invalid input response)
+
+#1
+Issue: if you enter rubbish into the keyword prompt, where rubbish is anything that the website's search engine will not return
+valid results of, the code will artificially stop
+
+Thoughts: Might be a problem because someone who does not code (e.g. an average employee) cannot immediately
+differentiate between faulty code vs invalid keyword input
+
+Response: Not impossible to solve - I can simply program the code to differentiate between "invalid keyword input" and "faulty code"
+    Assumption 1: if the code is working fine and the problem lies with the keyword input, the code still accesses the website
+        I can program the code to recognise the "invalid input webpage" that is displayed by propertyguru
+    Assumption 2: if the code is bugged and the problem is NOT with the keyword input, chances are we wont even be able to access
+    the website
+
+    Significance: I think this is a late-stage dev issue to tackle (high effort low return)
+
+#2
+Issue: yio chu kang example (split into both floor and land area, while 99% of other searches return a single value for
+floor size) (SOLVED)
+
+#3
+Integration challenges - probably need build executable interface?
+if not we have to expect every employee to literally download pycharm, access this code, and run it. Definitely
+possible but doesn't really sound like a very scalable/efficient idea in the long run
+
+Response: Definitely possible to do up an interface. Problem is I'm not an expert at this and I need time and space to
+learn how to do it. Probably need ~5 full working days' worth of time to learn + do up a good one.
+
+#4
+Some of the listings have fewer than 3 tags and data is mismatched (SOLVED)
+
+#5
+BIG listings (spotlighted?) coded differently, need to adjust the scrape for those (SOLVED)
+
+#6
+CAPTCHA problem (SOLVED)
+
+"""
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from datetime import date
+import xlsxwriter #NOTE: MUST USE MODULES THAT SUPPORT XLSX FORMAT (AND NOT XLS)
+import time
+import requests
+
+s = Service(ChromeDriverManager().install())
+browser = webdriver.Chrome(service = s)
+
+def webscrape_PropGuru():
+    global browser
+
+    listing_counter = 0
+    street_address_column = []
+    price_column = []
+    bed_count_column = []
+    bath_count_column = []
+    floor_area_column = []
+    psf_column = []
+    distance_to_nearest_transport_column = []
+    property_type_column = []
+    built_year_column = []
+    type_of_leasehold_column = []
+    lease_years_left_column = []
+    
+    todays_date = date.today()
+
+    exit_1 = False
+    while exit_1 == False:
+        key_word = input("Enter keyword(s): ")
+        if key_word == None:
+            print("Invalid input")
+        else:
+            exit_1 = True
+    
+    exit_2 = False
+    rent_or_sell_query = ""
+    while exit_2 == False:
+        rent_or_sell = input("Enter 1 for RENT OR Enter 2 for SELL: ")
+        if rent_or_sell == "1":
+            rent_or_sell_query = "RENT"
+            exit_2 = True
+        elif rent_or_sell == "2":
+            rent_or_sell_query = "SELL"
+            exit_2 = True
+        else:
+            print("Invalid input")
+            print("Please enter the number 1 or 2")
+            print()
+            
+    exit_3 = False
+    while exit_3 == False:
+        number_of_pages = input("Enter number of pages to scrape: ")
+        if number_of_pages.isdigit():
+            exit_3 = True
+        else:
+            print("Input is NOT a valid number")
+            print("Please enter a valid number")
+            print()
+
+    url_base = "https://www.propertyguru.com.sg/property-for-"
+
+    if rent_or_sell_query == "RENT":
+        url_base += "rent/1?freetext="
+    else:
+        url_base += "sale/1?freetext="
+
+    list = key_word.split(" ")
+    for word in list:
+        if word != list[-1]:
+            url_base += (word + "+")
+        else:
+            url_base += word
+
+    url = url_base
+    browser.get(url)
+    page = requests.get(url)
+    soup = BeautifulSoup(browser.page_source, "html.parser")
+
+    # Check for all possible property type labels
+    property_type_filters = ["HDB Flat"]
+    property_type_scout = soup.find_all(class_="property-type-filter-select-all icon-checkbox")
+    for option in property_type_scout:
+        property_type_filters.append(option.text.strip())
+
+    # Check for all lease year types
+    lease_year_type_filters = []
+    # PRIVATE NOTE TO SELF: This is a very good example of cancelling extra spaces found in the HTML code - if you copy
+    # and paste the class name u will return a None value because of the extra spaces in between
+    lease_year_type_section = soup.find("div", {
+        "class": "search-field tenure checkbox-multi-column search-filter-js-content param-tenure js-form-group btn-group tide-to tide-to-listing_type"})
+    lease_year_type_scout = lease_year_type_section.find_all("ul", {"class": "checkbox-tree"})
+    for option in lease_year_type_scout:
+        lease_year_type_filters.append(option.text.strip())
+
+    page_counter = 1
+    exit_main = False
+    while exit_main == False:
+        bowl_1 = soup.find_all(class_="col-xs-12 col-sm-7 listing-description")
+        bowl_2 = soup.find_all(class_="col-xs-12 col-sm-12 listing-description")
+        bowls = bowl_1 + bowl_2
+
+        for listing in bowls:
+            floor_area = "NIL"
+            psf_value = "NIL"
+
+            listing_counter += 1
+            try:
+                street_address = listing.find("span", {"itemprop" : "streetAddress"}).text.strip()
+            except AttributeError:
+                break
+
+            try:
+                price = listing.find("span", {"class" : "price"}).text.strip()
+            except AttributeError:
+                break
+
+            try:
+                bed_count = listing.find("span", {"class" : "bed"}).text.strip()
+            except AttributeError:
+                break
+
+            try:
+                bath_count = listing.find("span", {"class" : "bath"}).text.strip()
+            except AttributeError:
+                break
+
+            try:
+                area_psf_section = listing.find_all("li", {"class" : "listing-floorarea pull-left"})
+                for option in area_psf_section:
+                    if "sqft" in option.text.strip():
+                        floor_area = option.text.strip()
+                    elif "psf" in option.text.strip():
+                        psf_value = option.text.strip()
+            except AttributeError:
+                break
+
+            distance_to_transport = ""
+            try:
+                distance_to_transport_recipes = listing.find_all("li")
+                for dish in distance_to_transport_recipes:
+                    if "mins" in dish.text.strip():
+                        distance_to_transport = dish.text.strip()
+                        break
+            except AttributeError:
+                distance_to_transport = "NIL"
+            if distance_to_transport == "":
+                distance_to_transport = "NIL"
+
+            tagging_info_section = listing.find("ul", {"class" : "listing-property-type"})
+            taggings = tagging_info_section.find_all("li", {"class" : ""})
+
+            property_type_known = False
+            built_year_known = False
+            lease_year_type_known = False
+            exit_tagging_1 = False
+            exit_tagging_2 = False
+            exit_tagging_3 = False
+
+            while exit_tagging_1 == False:
+                try:
+                    tagging_1 = taggings[0].text.strip()
+                except IndexError:
+                    property_type = "NIL"
+                    lease_year_type = "NIL"
+                    built_year = "NIL"
+                    exit_tagging_1 = True
+                    exit_tagging_2 = True
+                    exit_tagging_3 = True
+                if tagging_1 in property_type_filters:
+                    property_type = tagging_1
+                    property_type_known = True
+                    exit_tagging_1 = True
+                elif tagging_1 in lease_year_type_filters:
+                    property_type = "NIL"
+                    lease_year_type = tagging_1
+                    lease_year_type_known = True
+                    exit_tagging_1 = True
+                elif "Built" in tagging_1:
+                    property_type = "NIL"
+                    lease_year_type = "NIL"
+                    built_year = tagging_1
+                    built_year_known = True
+                    exit_tagging_1 = True
+                else:
+                    print("FAULTY CODE#1")
+
+            while exit_tagging_2 == False:
+                try:
+                    tagging_2 = taggings[1].text.strip()
+                except IndexError:
+                    if property_type_known == False:
+                       property_type = "NIL"
+                    elif built_year_known == False:
+                        built_year = "NIL"
+                    elif lease_year_type_known == False:
+                        lease_year_type = "NIL"
+                    exit_tagging_2 = True
+                    exit_tagging_3 = True
+                if tagging_2 in lease_year_type_filters:
+                    lease_year_type = tagging_2
+                    lease_year_type_known = True
+                    exit_tagging_2 = True
+                elif "Built" in tagging_2:
+                    lease_year_type = "NIL"
+                    built_year = tagging_2
+                    exit_tagging_2 = True
+                    exit_tagging_3 = True
+                else:
+                    print("FAULTY CODE#2")
+
+            while exit_tagging_3 == False:
+                try:
+                    tagging_3 = taggings[2].text.strip()
+                    built_year = tagging_3
+                    exit_tagging_3 = True
+                except IndexError:
+                    if property_type_known == False:
+                       property_type = "NIL"
+                    elif built_year_known == False:
+                        built_year = "NIL"
+                    elif lease_year_type_known == False:
+                        lease_year_type = "NIL"
+                    exit_tagging_3 = True
+
+            try:
+                lease_years_left = (int(lease_year_type[:2]) - (int(todays_date.year) - int(built_year[-4:])))
+            except ValueError:
+                lease_years_left = "NIL"
+
+            #FOR CHECKING/IF WE WANT TO READ THE DATA OFF PYTHON CONSOLE
+            print(f"Listing[{listing_counter}]")
+            print(f"Street Address: {street_address}")
+            print(f"Price: {price}")
+            print(f"Bed Count: {bed_count}")
+            print(f"Bath Count: {bath_count}")
+            print(f"Floor Area: {floor_area}")
+            print(f"PSF: {psf_value[3:-4]}")
+            print(f"Distance to Nearest Transport: {distance_to_transport}")
+            print(f"Property Type: {property_type}")
+            print(f"Built Year: {built_year}")
+            print(f"Type of Leasehold: {lease_year_type}")
+            print(f"Lease years left: {lease_years_left}")
+            print()
+
+            #FINAL PRODUCT ON EXCEL
+            street_address_column.append(street_address)
+            price_column.append(price)
+            bed_count_column.append(bed_count)
+            bath_count_column.append(bath_count)
+            floor_area_column.append(floor_area)
+            psf_column.append(psf_value)
+            distance_to_nearest_transport_column.append(distance_to_transport)
+            property_type_column.append(property_type)
+            built_year_column.append(built_year)
+            type_of_leasehold_column.append(lease_year_type)
+            lease_years_left_column.append(lease_years_left)
+
+        # quits the old browser to avoid initiating captcha
+        browser.quit()
+        page_counter += 1
+        if page_counter > int(number_of_pages):
+            exit_main = True
+            continue
+
+        url_base = "https://www.propertyguru.com.sg/property-for-"
+
+        if rent_or_sell_query == "RENT":
+            url_base += "rent/"
+        else:
+            url_base += "sale/"
+
+        url_base += (str(page_counter) + "?freetext=")
+
+        list = key_word.split(" ")
+        for word in list:
+            if word != list[-1]:
+                url_base += (word + "+")
+            else:
+                url_base += word
+
+        browser = webdriver.Chrome(service = s)
+
+        url = url_base
+        browser.get(url)
+        soup = BeautifulSoup(browser.page_source, "html.parser")
+
+    #NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
+    #Openpyxl is an alternative module but idk why it just keeps bugging out for me
+    workbook = xlsxwriter.Workbook(f"{key_word}" + ".xlsx")
+    worksheet = workbook.add_worksheet("Data")
+
+    #STOPPED HERE READJUST HEADERS FOR XLSXRWITER FORMAT
+    #Fill up headers
+    worksheet.write(0, 0, "S/N")
+    worksheet.write(0, 1, "Street Address")
+    worksheet.write(0, 2, "Price")
+    worksheet.write(0, 3, "Bed Count")
+    worksheet.write(0, 4, "Bath Count")
+    worksheet.write(0, 5, "Floor Area")
+    worksheet.write(0, 6, "PSF")
+    worksheet.write(0, 7, "Distance to Nearest Transport")
+    worksheet.write(0, 8, "Property Type")
+    worksheet.write(0, 9, "Built Year")
+    worksheet.write(0, 10, "Type of Leasehold")
+    worksheet.write(0, 11, "Lease years left")
+
+    number = 0
+    for row_number in range(1, listing_counter + 1):
+        number += 1
+        worksheet.write(row_number, 0, number)
+
+    street_address_column_rowcounter = 0
+    for entry in street_address_column:
+        street_address_column_rowcounter += 1
+        worksheet.write(street_address_column_rowcounter, 1, entry)
+
+    price_column_rowcounter = 0
+    for entry in price_column:
+        price_column_rowcounter += 1
+        worksheet.write(price_column_rowcounter, 2, entry)
+
+    bed_count_column_rowcounter = 0
+    for entry in bed_count_column:
+        bed_count_column_rowcounter += 1
+        worksheet.write(bed_count_column_rowcounter, 3, entry)
+
+    bath_count_column_rowcounter = 0
+    for entry in bath_count_column:
+        bath_count_column_rowcounter += 1
+        worksheet.write(bath_count_column_rowcounter, 4, entry)
+
+    floor_area_column_rowcounter = 0
+    for entry in floor_area_column:
+        floor_area_column_rowcounter += 1
+        worksheet.write(floor_area_column_rowcounter, 5, entry)
+
+    psf_column_rowcounter = 0
+    for entry in psf_column:
+        psf_column_rowcounter += 1
+        worksheet.write(psf_column_rowcounter, 6, entry)
+
+    distance_to_nearest_transport_column_rowcounter = 0
+    for entry in distance_to_nearest_transport_column:
+        distance_to_nearest_transport_column_rowcounter += 1
+        worksheet.write(distance_to_nearest_transport_column_rowcounter, 7, entry)
+
+    property_type_column_rowcounter = 0
+    for entry in property_type_column:
+        property_type_column_rowcounter += 1
+        worksheet.write(property_type_column_rowcounter, 8, entry)
+
+    built_year_column_rowcounter = 0
+    for entry in built_year_column:
+        built_year_column_rowcounter += 1
+        worksheet.write(built_year_column_rowcounter, 9, entry[7:])
+
+    type_of_leasehold_column_rowcounter = 0
+    for entry in type_of_leasehold_column:
+        type_of_leasehold_column_rowcounter += 1
+        worksheet.write(type_of_leasehold_column_rowcounter, 10, entry)
+
+    lease_years_left_column_rowcounter = 0
+    for entry in lease_years_left_column:
+        lease_years_left_column_rowcounter += 1
+        worksheet.write(lease_years_left_column_rowcounter, 11, entry)
+
+    workbook.close()
+
+
+webscrape_PropGuru()
+
