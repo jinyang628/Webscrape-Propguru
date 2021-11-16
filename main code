@@ -1,9 +1,14 @@
 #General Dev Log
 """
-PROGRESS: DRAFT 1 DONE
+- Filters (check the valuation analysis document)
+- Distance from (chosen property)
+- The CONDITION column cant be scraped, but we should have an interface for users to input condition/drop down excel format
+- (RENT check + invalid input response)
+
+PROGRESS
     - SELL ready!
     - Excel ready!
-    - Draft 2 (RENT check + invalid input response)
+    - Listing ID ready!
 
 #1
 Issue: if you enter rubbish into the keyword prompt, where rubbish is anything that the website's search engine will not return
@@ -21,10 +26,6 @@ Response: Not impossible to solve - I can simply program the code to differentia
     Significance: I think this is a late-stage dev issue to tackle (high effort low return)
 
 #2
-Issue: yio chu kang example (split into both floor and land area, while 99% of other searches return a single value for
-floor size) (SOLVED)
-
-#3
 Integration challenges - probably need build executable interface?
 if not we have to expect every employee to literally download pycharm, access this code, and run it. Definitely
 possible but doesn't really sound like a very scalable/efficient idea in the long run
@@ -32,15 +33,20 @@ possible but doesn't really sound like a very scalable/efficient idea in the lon
 Response: Definitely possible to do up an interface. Problem is I'm not an expert at this and I need time and space to
 learn how to do it. Probably need ~5 full working days' worth of time to learn + do up a good one.
 
-#4
+#3
+Some use Completion 2020 instead of Built 2020 (adjust the filter word)
+
+#PAST OBSTACLES
 Some of the listings have fewer than 3 tags and data is mismatched (SOLVED)
 
-#5
-BIG listings (spotlighted?) coded differently, need to adjust the scrape for those (SOLVED)
+BIG listings (turbo) coded differently, need to adjust the scrape for those (SOLVED)
 
-#6
 CAPTCHA problem (SOLVED)
+- important lesson learnt here (if site is coded properly and page isnt loaded simultaneously with the captcha, simply
+    close and reopen the browser and alter the link to next page
 
+yio chu kang example (split into both floor and land area, while 99% of other searches return a single value for
+floor size) (SOLVED)
 """
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -50,6 +56,7 @@ from datetime import date
 import xlsxwriter #NOTE: MUST USE MODULES THAT SUPPORT XLSX FORMAT (AND NOT XLS)
 import time
 import requests
+import re
 
 s = Service(ChromeDriverManager().install())
 browser = webdriver.Chrome(service = s)
@@ -147,11 +154,20 @@ def webscrape_PropGuru():
         bowl_2 = soup.find_all(class_="col-xs-12 col-sm-12 listing-description")
         bowls = bowl_1 + bowl_2
 
+        listing_id_bowl = soup.decode()
+        listing_id_scout = re.findall('data-listing-id="[0-9]+"', listing_id_bowl)
+        list_of_listing_id = []
+        for listing_id in listing_id_scout:
+            index_number = listing_id.rfind('=')
+            if listing_id[index_number + 2:len(listing_id)-1] not in list_of_listing_id:
+                list_of_listing_id.append(listing_id[index_number + 2:len(listing_id)-1])
+
         for listing in bowls:
             floor_area = "NIL"
             psf_value = "NIL"
 
             listing_counter += 1
+
             try:
                 street_address = listing.find("span", {"itemprop" : "streetAddress"}).text.strip()
             except AttributeError:
@@ -279,9 +295,9 @@ def webscrape_PropGuru():
             print(f"Listing[{listing_counter}]")
             print(f"Street Address: {street_address}")
             print(f"Price: {price}")
-            print(f"Bed Count: {bed_count}")
-            print(f"Bath Count: {bath_count}")
-            print(f"Floor Area: {floor_area}")
+            print(f"Bedrooms: {bed_count}")
+            print(f"Bathrooms: {bath_count}")
+            print(f"Sqft: {floor_area}")
             print(f"PSF: {psf_value[3:-4]}")
             print(f"Distance to Nearest Transport: {distance_to_transport}")
             print(f"Property Type: {property_type}")
@@ -340,80 +356,92 @@ def webscrape_PropGuru():
     #STOPPED HERE READJUST HEADERS FOR XLSXRWITER FORMAT
     #Fill up headers
     worksheet.write(0, 0, "S/N")
-    worksheet.write(0, 1, "Street Address")
-    worksheet.write(0, 2, "Price")
-    worksheet.write(0, 3, "Bed Count")
-    worksheet.write(0, 4, "Bath Count")
-    worksheet.write(0, 5, "Floor Area")
-    worksheet.write(0, 6, "PSF")
-    worksheet.write(0, 7, "Distance to Nearest Transport")
-    worksheet.write(0, 8, "Property Type")
-    worksheet.write(0, 9, "Built Year")
-    worksheet.write(0, 10, "Type of Leasehold")
-    worksheet.write(0, 11, "Lease years left")
+    worksheet.write(0, 1, "Listing ID")
+    worksheet.write(0, 2, "Street Address")
+    worksheet.write(0, 3, "Price")
+    worksheet.write(0, 4, "Bedrooms")
+    worksheet.write(0, 5, "Bathrooms")
+    worksheet.write(0, 6, "Sqft")
+    worksheet.write(0, 7, "PSF")
+    worksheet.write(0, 8, "Distance to Nearest Transport")
+    worksheet.write(0, 9, "Property Type")
+    worksheet.write(0, 10, "Built Year")
+    worksheet.write(0, 11, "Type of Leasehold")
+    worksheet.write(0, 12, "Lease years left")
 
     number = 0
     for row_number in range(1, listing_counter + 1):
         number += 1
         worksheet.write(row_number, 0, number)
 
+    list_of_listing_id_column_rowcounter = 0
+    for entry in list_of_listing_id:
+        list_of_listing_id_column_rowcounter += 1
+        worksheet.write(list_of_listing_id_column_rowcounter, 1, entry)
+
     street_address_column_rowcounter = 0
     for entry in street_address_column:
         street_address_column_rowcounter += 1
-        worksheet.write(street_address_column_rowcounter, 1, entry)
+        worksheet.write(street_address_column_rowcounter, 2, entry)
 
     price_column_rowcounter = 0
     for entry in price_column:
+        modified_price_input = "$" + entry
         price_column_rowcounter += 1
-        worksheet.write(price_column_rowcounter, 2, entry)
+        worksheet.write(price_column_rowcounter, 3, modified_price_input)
 
     bed_count_column_rowcounter = 0
     for entry in bed_count_column:
         bed_count_column_rowcounter += 1
-        worksheet.write(bed_count_column_rowcounter, 3, entry)
+        worksheet.write(bed_count_column_rowcounter, 4, entry)
 
     bath_count_column_rowcounter = 0
     for entry in bath_count_column:
         bath_count_column_rowcounter += 1
-        worksheet.write(bath_count_column_rowcounter, 4, entry)
+        worksheet.write(bath_count_column_rowcounter, 5, entry)
 
     floor_area_column_rowcounter = 0
     for entry in floor_area_column:
+        modified_floor_area_input = entry.replace(" sqft", "")
         floor_area_column_rowcounter += 1
-        worksheet.write(floor_area_column_rowcounter, 5, entry)
+        worksheet.write(floor_area_column_rowcounter, 6, modified_floor_area_input)
 
     psf_column_rowcounter = 0
     for entry in psf_column:
+        modified_psf_input_draft = ""
+        for character in entry:
+            if character.isdigit() or character == ".":
+                modified_psf_input_draft += character
+        modified_psf_input = round(float(modified_psf_input_draft))
         psf_column_rowcounter += 1
-        worksheet.write(psf_column_rowcounter, 6, entry)
+        worksheet.write(psf_column_rowcounter, 7, modified_psf_input)
 
     distance_to_nearest_transport_column_rowcounter = 0
     for entry in distance_to_nearest_transport_column:
         distance_to_nearest_transport_column_rowcounter += 1
-        worksheet.write(distance_to_nearest_transport_column_rowcounter, 7, entry)
+        worksheet.write(distance_to_nearest_transport_column_rowcounter, 8, entry)
 
     property_type_column_rowcounter = 0
     for entry in property_type_column:
         property_type_column_rowcounter += 1
-        worksheet.write(property_type_column_rowcounter, 8, entry)
+        worksheet.write(property_type_column_rowcounter, 9, entry)
 
     built_year_column_rowcounter = 0
     for entry in built_year_column:
         built_year_column_rowcounter += 1
-        worksheet.write(built_year_column_rowcounter, 9, entry[7:])
+        worksheet.write(built_year_column_rowcounter, 10, entry[7:])
 
     type_of_leasehold_column_rowcounter = 0
     for entry in type_of_leasehold_column:
         type_of_leasehold_column_rowcounter += 1
-        worksheet.write(type_of_leasehold_column_rowcounter, 10, entry)
+        worksheet.write(type_of_leasehold_column_rowcounter, 11, entry)
 
     lease_years_left_column_rowcounter = 0
     for entry in lease_years_left_column:
         lease_years_left_column_rowcounter += 1
-        worksheet.write(lease_years_left_column_rowcounter, 11, entry)
+        worksheet.write(lease_years_left_column_rowcounter, 12, entry)
 
     workbook.close()
-
 
 webscrape_PropGuru()
 
