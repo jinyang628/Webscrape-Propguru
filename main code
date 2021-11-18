@@ -1,14 +1,16 @@
 #General Dev Log
 """
-- Filters (check the valuation analysis document)
+- Filters (should try to print out all inputs and allow users to go back if they realise its wrong)
 - Distance from (chosen property)
 - The CONDITION column cant be scraped, but we should have an interface for users to input condition/drop down excel format
-- (RENT check + invalid input response)
+- RENT check + invalid input response
+- BLOCK (FIND A SOLUTION TO MESSY LISTINGS), FLOOR LEVEL (MUST OPEN A NEW TAB - necessary?)
 
 PROGRESS
     - SELL ready!
     - Excel ready!
     - Listing ID ready!
+    - PPG LINK ready
 
 #1
 Issue: if you enter rubbish into the keyword prompt, where rubbish is anything that the website's search engine will not return
@@ -61,8 +63,45 @@ import re
 s = Service(ChromeDriverManager().install())
 browser = webdriver.Chrome(service = s)
 
+def show_chosen_filters():
+    global property_filter_check
+    global price_filter_check
+    global bedroom_filter_check
+    global floor_size_check
+    global psf_check
+    global bathroom_check
+    global tenure_check
+    global build_year_check
+    global floor_level_check
+    global furnishing_check
+    global listed_date_check
+
+    print(f"Property Filters: {property_filter_check}")
+    print(f"Price Filters: {price_filter_check}")
+    print(f"Bedroom Filters: {bedroom_filter_check}")
+    print(f"Floorsize Filters: {floor_level_check}")
+    print(f"PSF Filters: {psf_check}")
+    print(f"Bathroom Filters: {bathroom_check}")
+    print(f"Tenure Filters: {tenure_check}")
+    print(f"Build Year Filters: {build_year_check}")
+    print(f"Floor Level Filters: {floor_level_check}")
+    print(f"Furnishing Filters: {furnishing_check}")
+    print(f"Listed Date Filters: {listed_date_check}")
+
+
 def webscrape_PropGuru():
     global browser
+    global property_filter_check
+    global price_filter_check
+    global bedroom_filter_check
+    global floor_size_check
+    global psf_check
+    global bathroom_check
+    global tenure_check
+    global build_year_check
+    global floor_level_check
+    global furnishing_check
+    global listed_date_check
 
     listing_counter = 0
     street_address_column = []
@@ -76,14 +115,18 @@ def webscrape_PropGuru():
     built_year_column = []
     type_of_leasehold_column = []
     lease_years_left_column = []
+    ppg_link_column = []
+    block_number_column = []
     
     todays_date = date.today()
 
     exit_1 = False
     while exit_1 == False:
         key_word = input("Enter keyword(s): ")
+        print()
         if key_word == None:
             print("Invalid input")
+            print()
         else:
             exit_1 = True
     
@@ -91,6 +134,7 @@ def webscrape_PropGuru():
     rent_or_sell_query = ""
     while exit_2 == False:
         rent_or_sell = input("Enter 1 for RENT OR Enter 2 for SELL: ")
+        print()
         if rent_or_sell == "1":
             rent_or_sell_query = "RENT"
             exit_2 = True
@@ -101,10 +145,111 @@ def webscrape_PropGuru():
             print("Invalid input")
             print("Please enter the number 1 or 2")
             print()
-            
+
+    exit_additional_filters = False
+    while exit_additional_filters == False:
+        query = input("Do you want to insert additional filters? Enter 1 for YES or Enter 2 for NO: ")
+        print()
+        if query == "2":
+            exit_additional_filters = True
+        elif query == "1":
+            property_filter_check = "NIL"
+            price_filter_check = "NIL"
+            bedroom_filter_check = "NIL"
+            floor_size_check = "NIL"
+            psf_check = "NIL"
+            bathroom_check = "NIL"
+            tenure_check =  "NIL"
+            build_year_check = "NIL"
+            floor_level_check = "NIL"
+            furnishing_check = "NIL"
+            listed_date_check = "NIL"
+
+            exit_property_type_filters = False
+            while exit_property_type_filters == False:
+                query = input("Do you want to insert property type filters? Enter 1 for Yes or Enter 2 for NO: ")
+                print()
+                if query == "2":
+                    exit_property_type_filters = True
+                elif query == "1":
+                    exit_property_type_choice = False
+                    while exit_property_type_choice == False:
+                        query = input("Enter 1 for Condo, Enter 2 for Landed or Enter 3 for HDB: ")
+                        print()
+                        if query == "1":
+                            property_filter_check = "Condo"
+                        elif query == "2":
+                            property_filter_check = "Landed"
+                        elif query == "3":
+                            property_filter_check = "HDB"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2 or 3")
+                            print()
+                            continue
+                        exit_property_type_filters = True
+                        exit_property_type_choice = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+                    continue
+
+            show_chosen_filters()
+
+            exit_price_filters = False
+            while exit_price_filters == False:
+                query = input("Do you want to insert price filters? Enter 1 for Yes or Enter 2 for NO: ")
+                print()
+                if query == "2":
+                    exit_price_filters = True
+                elif query == "1":
+                    print("Note: Value will be rounded off to the nearest possible option on propertyguru's website") #min value round down, max value round up
+                    print()
+                    exit_min_price = False
+                    while exit_min_price == False:
+                        min_price_input = input("Enter minimum price: ")
+                        print()
+                        min_price_confirmation = input(
+                            f"You entered ${min_price_input}. Enter 1 to confirm or Enter 2 to re-enter the value: ")
+                        print()
+                        if min_price_confirmation == "1":
+                            exit_min_price = True
+                        elif min_price_confirmation == "2":
+                            continue
+                        else:
+                            print("Invalid input")
+                            print("Please enter the number 1 or 2")
+                            print()
+
+                    exit_max_price = False
+                    while exit_max_price == False:
+                        max_price_input = input("Enter maximum price: ")
+                        print()
+                        max_price_confirmation = input(
+                            f"You entered ${max_price_input}. Enter 1 to confirm or Enter 2 to re-enter the value: ")
+                        print()
+                        if max_price_confirmation == "1":
+                            exit_max_price = True
+                        elif max_price_confirmation == "2":
+                            continue
+                        else:
+                            print("Invalid input")
+                            print("Please enter the number 1 or 2")
+                            print()
+
+            show_chosen_filters()
+
+        else:
+            print("Invalid input")
+            print("Please enter the number 1 or 2")
+            print()
+            continue
+
     exit_3 = False
     while exit_3 == False:
         number_of_pages = input("Enter number of pages to scrape: ")
+        print()
         if number_of_pages.isdigit():
             exit_3 = True
         else:
@@ -154,8 +299,8 @@ def webscrape_PropGuru():
         bowl_2 = soup.find_all(class_="col-xs-12 col-sm-12 listing-description")
         bowls = bowl_1 + bowl_2
 
-        listing_id_bowl = soup.decode()
-        listing_id_scout = re.findall('data-listing-id="[0-9]+"', listing_id_bowl)
+        listing_bowl = soup.decode()
+        listing_id_scout = re.findall('data-listing-id="[0-9]+"', listing_bowl)
         list_of_listing_id = []
         for listing_id in listing_id_scout:
             index_number = listing_id.rfind('=')
@@ -169,9 +314,19 @@ def webscrape_PropGuru():
             listing_counter += 1
 
             try:
+                ppg_link = listing.a["href"]
+            except AttributeError:
+                break
+
+            try:
                 street_address = listing.find("span", {"itemprop" : "streetAddress"}).text.strip()
             except AttributeError:
                 break
+
+            block_number_scout = street_address.split(" ")
+            block_number = block_number_scout[0]
+            if not block_number[0].isdigit(): #ASSUMES that if the first character of block number is a number
+                block_number = "" ###NEED FIND A WAY
 
             try:
                 price = listing.find("span", {"class" : "price"}).text.strip()
@@ -304,6 +459,8 @@ def webscrape_PropGuru():
             print(f"Built Year: {built_year}")
             print(f"Type of Leasehold: {lease_year_type}")
             print(f"Lease years left: {lease_years_left}")
+            print(f"PPG Link: {ppg_link}")
+            print(f"Block number: {block_number}")
             print()
 
             #FINAL PRODUCT ON EXCEL
@@ -318,6 +475,8 @@ def webscrape_PropGuru():
             built_year_column.append(built_year)
             type_of_leasehold_column.append(lease_year_type)
             lease_years_left_column.append(lease_years_left)
+            ppg_link_column.append(ppg_link)
+            block_number_column.append(block_number)
 
         # quits the old browser to avoid initiating captcha
         browser.quit()
@@ -355,8 +514,8 @@ def webscrape_PropGuru():
 
     #STOPPED HERE READJUST HEADERS FOR XLSXRWITER FORMAT
     #Fill up headers
-    worksheet.write(0, 0, "S/N")
-    worksheet.write(0, 1, "Listing ID")
+    worksheet.write(0, 0, "Listing ID")
+    worksheet.write(0, 1, "PPG Link ID")
     worksheet.write(0, 2, "Street Address")
     worksheet.write(0, 3, "Price")
     worksheet.write(0, 4, "Bedrooms")
@@ -368,6 +527,8 @@ def webscrape_PropGuru():
     worksheet.write(0, 10, "Built Year")
     worksheet.write(0, 11, "Type of Leasehold")
     worksheet.write(0, 12, "Lease years left")
+    worksheet.write(0, 13, "PPG Link")
+    worksheet.write(0, 14, "Block")
 
     number = 0
     for row_number in range(1, listing_counter + 1):
@@ -429,7 +590,10 @@ def webscrape_PropGuru():
     built_year_column_rowcounter = 0
     for entry in built_year_column:
         built_year_column_rowcounter += 1
-        worksheet.write(built_year_column_rowcounter, 10, entry[7:])
+        if entry == "NIL":
+            worksheet.write(built_year_column_rowcounter, 10, entry)
+        else:
+            worksheet.write(built_year_column_rowcounter, 10, entry[7:])
 
     type_of_leasehold_column_rowcounter = 0
     for entry in type_of_leasehold_column:
@@ -440,6 +604,16 @@ def webscrape_PropGuru():
     for entry in lease_years_left_column:
         lease_years_left_column_rowcounter += 1
         worksheet.write(lease_years_left_column_rowcounter, 12, entry)
+
+    ppg_link_rowcounter = 0
+    for entry in ppg_link_column:
+        ppg_link_rowcounter += 1
+        worksheet.write(ppg_link_rowcounter, 13, entry)
+
+    block_number_rowcounter = 0
+    for entry in block_number_column:
+        block_number_rowcounter += 1
+        worksheet.write(block_number_rowcounter, 14, entry)
 
     workbook.close()
 
