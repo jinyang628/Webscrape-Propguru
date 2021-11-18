@@ -1,4 +1,4 @@
-#General Dev Log
+# General Dev Log
 """
 - Filters (should try to print out all inputs and allow users to go back if they realise its wrong)
 - Distance from (chosen property)
@@ -50,90 +50,95 @@ CAPTCHA problem (SOLVED)
 yio chu kang example (split into both floor and land area, while 99% of other searches return a single value for
 floor size) (SOLVED)
 """
+
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import date
-import xlsxwriter #NOTE: MUST USE MODULES THAT SUPPORT XLSX FORMAT (AND NOT XLS)
+import xlsxwriter  # NOTE: MUST USE MODULES THAT SUPPORT XLSX FORMAT (AND NOT XLS)
 import time
 import requests
 import re
 
 s = Service(ChromeDriverManager().install())
-browser = webdriver.Chrome(service = s)
+browser = webdriver.Chrome(service=s)
+
 
 def show_chosen_filters():
-    global property_filter_check
+    global property_type_filter_check
     global price_filter_check
     global bedroom_filter_check
     global floor_size_check
-    global psf_check
-    global bathroom_check
-    global tenure_check
-    global build_year_check
-    global floor_level_check
-    global furnishing_check
-    global listed_date_check
+    global psf_filter_check
+    global bathroom_filter_check
+    global tenure_filter_check
+    global build_year_filter_check
+    global floor_level_filter_check
+    global furnishing_filter_check
+    global listed_date_filter_check
 
-    print(f"Property Filters: {property_filter_check}")
-    print(f"Price Filters: {price_filter_check}")
-    print(f"Bedroom Filters: {bedroom_filter_check}")
-    print(f"Floorsize Filters: {floor_level_check}")
-    print(f"PSF Filters: {psf_check}")
-    print(f"Bathroom Filters: {bathroom_check}")
-    print(f"Tenure Filters: {tenure_check}")
-    print(f"Build Year Filters: {build_year_check}")
-    print(f"Floor Level Filters: {floor_level_check}")
-    print(f"Furnishing Filters: {furnishing_check}")
-    print(f"Listed Date Filters: {listed_date_check}")
+    print(f"Property Type: {property_type_filter_check}")
+    print(f"Price Range: {price_filter_check}")
+    print(f"Bedrooms: {bedroom_filter_check}")
+    print(f"Floorsize: {floor_level_filter_check}")
+    print(f"PSF Range: {psf_filter_check}")
+    print(f"Bathrooms: {bathroom_filter_check}")
+    print(f"Tenure Type: {tenure_filter_check}")
+    print(f"Build Year: {build_year_filter_check}")
+    print(f"Floor Level: {floor_level_filter_check}")
+    print(f"Furnishing: {furnishing_filter_check}")
+    print(f"Listed Date: {listed_date_filter_check}")
+    print()
 
 
 def webscrape_PropGuru():
     global browser
-    global property_filter_check
+    global property_type_filter_check
     global price_filter_check
     global bedroom_filter_check
-    global floor_size_check
-    global psf_check
-    global bathroom_check
-    global tenure_check
-    global build_year_check
-    global floor_level_check
-    global furnishing_check
-    global listed_date_check
+    global floor_size_filter_check
+    global psf_filter_check
+    global bathroom_filter_check
+    global tenure_filter_check
+    global build_year_filter_check
+    global floor_level_filter_check
+    global furnishing_filter_check
+    global listed_date_filter_check
 
     listing_counter = 0
-    street_address_column = []
+    #street_address_column = []
     price_column = []
     bed_count_column = []
     bath_count_column = []
     floor_area_column = []
     psf_column = []
-    distance_to_nearest_transport_column = []
-    property_type_column = []
-    built_year_column = []
-    type_of_leasehold_column = []
-    lease_years_left_column = []
+    #distance_to_nearest_transport_column = []
+    #property_type_column = []
+    #built_year_column = []
+    #type_of_leasehold_column = []
+    #lease_years_left_column = []
     ppg_link_column = []
     block_number_column = []
-    
-    todays_date = date.today()
+
+    #todays_date = date.today()
 
     exit_1 = False
     while exit_1 == False:
         key_word = input("Enter keyword(s): ")
-        print()
         if key_word == None:
             print("Invalid input")
-            print()
         else:
             exit_1 = True
-    
+
     exit_2 = False
     rent_or_sell_query = ""
     while exit_2 == False:
-        rent_or_sell = input("Enter 1 for RENT OR Enter 2 for SELL: ")
+        rent_or_sell = input(
+"""
+Enter 1 for RENT 
+Enter 2 for SELL
+""")
         print()
         if rent_or_sell == "1":
             rent_or_sell_query = "RENT"
@@ -148,40 +153,55 @@ def webscrape_PropGuru():
 
     exit_additional_filters = False
     while exit_additional_filters == False:
-        query = input("Do you want to insert additional filters? Enter 1 for YES or Enter 2 for NO: ")
+        query = input(
+"""    
+Do you want to insert additional filters? 
+Enter 1 for YES 
+Enter 2 for NO
+""")
         print()
         if query == "2":
             exit_additional_filters = True
         elif query == "1":
-            property_filter_check = "NIL"
-            price_filter_check = "NIL"
-            bedroom_filter_check = "NIL"
-            floor_size_check = "NIL"
-            psf_check = "NIL"
-            bathroom_check = "NIL"
-            tenure_check =  "NIL"
-            build_year_check = "NIL"
-            floor_level_check = "NIL"
-            furnishing_check = "NIL"
-            listed_date_check = "NIL"
+            property_type_filter_check = "NIL" #Done
+            price_filter_check = "NIL" #Done
+            bedroom_filter_check = "NIL" #Done
+            floor_size_filter_check = "NIL"  # Done
+            psf_filter_check = "NIL"  # Done
+            bathroom_filter_check = "NIL"  # Done
+            tenure_filter_check = "NIL" #Done
+            build_year_filter_check = "NIL" #Done
+            floor_level_filter_check = "NIL" #Done
+            furnishing_filter_check = "NIL" #Done
+            listed_date_filter_check = "NIL" #Done
 
             exit_property_type_filters = False
             while exit_property_type_filters == False:
-                query = input("Do you want to insert property type filters? Enter 1 for Yes or Enter 2 for NO: ")
+                query = input(
+"""
+Do you want to insert property type filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
                 print()
                 if query == "2":
                     exit_property_type_filters = True
                 elif query == "1":
                     exit_property_type_choice = False
                     while exit_property_type_choice == False:
-                        query = input("Enter 1 for Condo, Enter 2 for Landed or Enter 3 for HDB: ")
+                        query = input(
+"""
+Enter 1 for Condo
+Enter 2 for Landed 
+Enter 3 for HDB
+""")
                         print()
                         if query == "1":
-                            property_filter_check = "Condo"
+                            property_type_filter_check = "Condo"
                         elif query == "2":
-                            property_filter_check = "Landed"
+                            property_type_filter_check = "Landed"
                         elif query == "3":
-                            property_filter_check = "HDB"
+                            property_type_filter_check = "HDB"
                         else:
                             print("Invalid input")
                             print("Please enter the numbers 1,2 or 3")
@@ -194,24 +214,59 @@ def webscrape_PropGuru():
                     print("Please enter the number 1 or 2")
                     print()
                     continue
-
             show_chosen_filters()
 
             exit_price_filters = False
             while exit_price_filters == False:
-                query = input("Do you want to insert price filters? Enter 1 for Yes or Enter 2 for NO: ")
+                query = input(
+"""
+Do you want to insert price filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
                 print()
                 if query == "2":
                     exit_price_filters = True
                 elif query == "1":
-                    print("Note: Value will be rounded off to the nearest possible option on propertyguru's website") #min value round down, max value round up
+                    ppg_price_filter_options = [200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000,
+                                                1250000, 1500000, 2000000, 2500000, 3000000, 4000000, 5000000, 6000000,
+                                                8000000, 10000000, 15000000, 20000000, 30000000, 50000000]
+
+                    print(
+                        "Note: Value will be rounded off to the nearest possible option on propertyguru's website")  # min value round down, max value round up
                     print()
                     exit_min_price = False
                     while exit_min_price == False:
-                        min_price_input = input("Enter minimum price: ")
+                        min_price_input = input("Enter minimum price (Enter NO if No Min): ")
                         print()
-                        min_price_confirmation = input(
-                            f"You entered ${min_price_input}. Enter 1 to confirm or Enter 2 to re-enter the value: ")
+                        if min_price_input.strip().upper() != "NO":
+                            min_price_confirmation = input(
+f"""
+You entered ${min_price_input}
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                            if int(min_price_input) not in ppg_price_filter_options:
+                                exit = False
+                                counter = -1
+                                while exit == False:
+                                    counter += 1
+                                    print(ppg_price_filter_options[counter])
+                                    print(min_price_input)
+                                    print("error comes here")
+                                    if ppg_price_filter_options[counter] < int(min_price_input):
+                                        continue
+                                    else:
+                                        min_price_input = str(ppg_price_filter_options[counter-1])
+                                        exit = True
+
+                        else:
+                            min_price_confirmation = input(
+"""
+You did not enter a minimum price
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
                         print()
                         if min_price_confirmation == "1":
                             exit_min_price = True
@@ -224,10 +279,32 @@ def webscrape_PropGuru():
 
                     exit_max_price = False
                     while exit_max_price == False:
-                        max_price_input = input("Enter maximum price: ")
+                        max_price_input = input("Enter maximum price (Enter NO if No Max): ")
                         print()
-                        max_price_confirmation = input(
-                            f"You entered ${max_price_input}. Enter 1 to confirm or Enter 2 to re-enter the value: ")
+                        if max_price_input.strip().upper() != "NO":
+                            max_price_confirmation = input(
+f"""
+You entered ${max_price_input}
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                            if int(max_price_input) not in ppg_price_filter_options:
+                                exit = False
+                                counter = -1
+                                while exit == False:
+                                    counter += 1
+                                    if ppg_price_filter_options[counter] < int(max_price_input):
+                                        continue
+                                    else:
+                                        max_price_input = str(ppg_price_filter_options[counter])
+                                        exit = True
+                        else:
+                            max_price_confirmation = input(
+"""
+You did not enter a maximum price
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
                         print()
                         if max_price_confirmation == "1":
                             exit_max_price = True
@@ -238,7 +315,557 @@ def webscrape_PropGuru():
                             print("Please enter the number 1 or 2")
                             print()
 
+                        price_filter_check = f"Min Price: {min_price_input.strip().upper()} | Max Price: {max_price_input.strip().upper()}"
+                        exit_price_filters = True
             show_chosen_filters()
+
+            exit_bedroom_filters = False
+            while exit_bedroom_filters == False:
+                query = input(
+"""
+Do you want to insert bedroom filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_bedroom_filters = True
+                elif query == "1":
+                    exit_bedroom_choice = False
+                    while exit_bedroom_choice == False:
+                        query = input(
+"""
+Enter 1 for ONE Bedroom
+Enter 2 for TWO Bedrooms
+Enter 3 for THREE Bedrooms
+Enter 4 for FOUR Bedrooms
+Enter 5 for FIVE+ Bedrooms
+Enter 6 for STUDIO
+""")
+                        print()
+                        if query == "1":
+                            bedroom_filter_check = "1"
+                        elif query == "2":
+                            bedroom_filter_check = "2"
+                        elif query == "3":
+                            bedroom_filter_check = "3"
+                        elif query == "4":
+                            bedroom_filter_check = "4"
+                        elif query == "5":
+                            bedroom_filter_check = "5+"
+                        elif query == "6":
+                            bedroom_filter_check = "Studio"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2,3,4,5 or 6")
+                            print()
+                            continue
+                        exit_bedroom_choice = True
+                        exit_bedroom_filters = True
+            show_chosen_filters()
+
+            exit_floor_size_filters = False
+            while exit_floor_size_filters == False:
+                query = input(
+"""
+Do you want to insert floorsize filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_floor_size_filters = True
+                elif query == "1":
+                    ppg_min_floor_size_filter_options = [500,750,1000,1200,1500,2000,2500,3000,4000]
+                    ppg_max_floor_size_filter_options = [500,750,1000,1200,1500,2000,2500,3000,4000,5000,7500,10000]
+                    while exit_floor_size_filters == False:
+                        print(
+                            "Note: Value will be rounded off to the nearest possible option on propertyguru's website")  # min value round down, max value round up
+                        print()
+                        exit_min_floor_size = False
+                        while exit_min_floor_size == False:
+                            min_floor_size_input = input("Enter minimum floorsize (Enter NO if No Min): ")
+                            print()
+                            if min_floor_size_input.strip().upper() != "NO":
+                                min_floor_size_confirmation = input(
+f"""
+You entered ${min_floor_size_input}
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                                if int(min_floor_size_input) not in ppg_min_floor_size_filter_options:
+                                    exit = False
+                                    counter = -1
+                                    while exit == False:
+                                        counter += 1
+                                        if ppg_min_floor_size_filter_options[counter] < int(min_floor_size_input):
+                                            continue
+                                        else:
+                                            min_floor_size_input = str(ppg_min_floor_size_filter_options[counter - 1])
+                            else:
+                                min_floor_size_confirmation = input(
+"""
+You did not enter a minimum floorsize
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                            print()
+                            if min_floor_size_confirmation == "1":
+                                exit_min_floor_size = True
+                            elif min_floor_size_confirmation == "2":
+                                continue
+                            else:
+                                print("Invalid input")
+                                print("Please enter the number 1 or 2")
+                                print()
+
+                        exit_max_floor_size = False
+                        while exit_max_floor_size == False:
+                            max_floor_size_input = input("Enter maximum floor_size (Enter NO if No Max): ")
+                            print()
+                            if max_floor_size_input.strip().upper() != "NO":
+                                max_floor_size_confirmation = input(
+f"""
+You entered {max_floor_size_input} sqft
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                                if int(max_floor_size_input) not in ppg_max_floor_size_filter_options:
+                                    exit = False
+                                    counter = -1
+                                    while exit == False:
+                                        counter += 1
+                                        if ppg_max_floor_size_filter_options[counter] < int(max_floor_size_input):
+                                            continue
+                                        else:
+                                            max_floor_size_input = str(ppg_max_floor_size_filter_options)
+                            else:
+                                max_floor_size_confirmation = input(
+"""
+You did not enter a maximum floorsize
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                            print()
+                            if max_floor_size_confirmation == "1":
+                                exit_max_floor_size = True
+                            elif max_floor_size_confirmation == "2":
+                                continue
+                            else:
+                                print("Invalid input")
+                                print("Please enter the number 1 or 2")
+                                print()
+                        exit_floor_size_filters = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+            show_chosen_filters()
+
+            exit_psf_filters = False
+            while exit_psf_filters == False:
+                query = input(
+"""
+Do you want to insert PSF filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_psf_filters = True
+                elif query == "1":
+                    ppg_psf_filter_options = []
+                    for i in range (1, 41):
+                        ppg_psf_filter_options.append(i*100)
+                    print(
+                        "Note: Value will be rounded off to the nearest possible option on propertyguru's website")  # min value round down, max value round up
+                    print()
+                    exit_min_psf = False
+                    while exit_min_psf == False:
+                        min_psf_input = input("Enter minimum psf (Enter NO if No Min): ")
+                        print()
+                        if min_psf_input.strip().upper() != "NO":
+                            min_psf_confirmation = input(
+f"""
+You entered {min_psf_input} psf
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                            if int(min_psf_input) not in ppg_psf_filter_options:
+                                exit = False
+                                counter = -1
+                                while exit == False:
+                                    counter += 1
+                                    if ppg_psf_filter_options[counter] < int(min_psf_input):
+                                        continue
+                                    else:
+                                        min_psf_input = str(ppg_psf_filter_options[counter - 1])
+                        else:
+                            min_psf_confirmation = input(
+"""
+You did not enter a minimum psf 
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                        print()
+                        if min_psf_confirmation == "1":
+                            exit_min_psf = True
+                        elif min_psf_confirmation == "2":
+                            continue
+                        else:
+                            print("Invalid input")
+                            print("Please enter the number 1 or 2")
+                            print()
+
+                    exit_max_psf = False
+                    while exit_max_psf == False:
+                        max_psf_input = input("Enter maximum psf (Enter NO if No Max): ")
+                        print()
+                        if max_psf_input.strip().upper() != "NO":
+                            max_psf_confirmation = input(
+f"""
+You entered {max_psf_input} psf
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                            if int(max_psf_input) not in ppg_psf_filter_options:
+                                exit = False
+                                counter = -1
+                                while exit == False:
+                                    counter += 1
+                                    if ppg_psf_filter_options[counter] < int(max_psf_input):
+                                        continue
+                                    else:
+                                        max_psf_input = str(ppg_psf_filter_options[counter])
+                        else:
+                            max_psf_confirmation = input(
+"""
+You did not enter a maximum psf
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                        print()
+                        if max_psf_confirmation == "1":
+                            exit_max_psf = True
+                        elif max_psf_confirmation == "2":
+                            continue
+                        else:
+                            print("Invalid input")
+                            print("Please enter the number 1 or 2")
+                            print()
+
+                    psf_filter_check = f"Min PSF: {min_psf_input} | Max PSF: {max_psf_input}"
+                    exit_psf_filters = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+            show_chosen_filters()
+
+            exit_bathroom_filters = False
+            while exit_bathroom_filters == False:
+                query = input(
+"""
+Do you want to insert bathroom filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_bathroom_filters = True
+                elif query == "1":
+                    exit_bathroom_choice = False
+                    while exit_bathroom_choice == False:
+                        query = input(
+"""
+Enter 1 for ONE bathroom
+Enter 2 for TWO bathrooms
+Enter 3 for THREE bathrooms 
+Enter 4 for FOUR bathrooms
+Enter 5 for FIVE bathrooms
+""")
+                        print()
+                        if query == "1":
+                            bathroom_filter_check = "1"
+                        elif query == "2":
+                            bathroom_filter_check = "2"
+                        elif query == "3":
+                            bathroom_filter_check = "3"
+                        elif query == "4":
+                            bathroom_filter_check = "4"
+                        elif query == "5":
+                            bathroom_filter_check = "5+"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2,3,4,5 or 6")
+                            print()
+                            continue
+                        exit_bathroom_choice = True
+                        exit_bathroom_filters = True
+            show_chosen_filters()
+
+            exit_tenure_filters = False
+            while exit_tenure_filters == False:
+                query = input(
+"""
+Do you want to insert tenure filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_tenure_filters = True
+                elif query == "1":
+                    exit_tenure_choice = False
+                    while exit_tenure_choice == False:
+                        query = input(
+"""
+Enter 1 for Freehold
+Enter 2 for 99-year Leasehold 
+Enter 3 for 103-year Leasehold
+Enter 4 for 110-year Leasehold
+Enter 5 for 999-year Leasehold
+Enter 6 for Unknown Tenure 
+""")
+                        print()
+                        if query == "1":
+                            tenure_filter_check = "Freehold"
+                        elif query == "2":
+                            tenure_filter_check = "99-year Leasehold"
+                        elif query == "3":
+                            tenure_filter_check = "103-year Leasehold"
+                        elif query == "4":
+                            tenure_filter_check = "110-year Leasehold"
+                        elif query == "5":
+                            tenure_filter_check = "999-year Leasehold"
+                        elif query == "6":
+                            tenure_filter_check = "Unknown Tenure"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2 or 3")
+                            print()
+                            continue
+                        exit_tenure_filters = True
+                        exit_tenure_choice = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+                    continue
+            show_chosen_filters()
+
+            exit_build_year_filters = False
+            while exit_build_year_filters == False:
+                query = input(
+"""
+Do you want to insert build year filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_build_year_filters = True
+                elif query == "1":
+                    print(
+                        "Note: Value will be rounded off to the nearest possible option on propertyguru's website")  # min value round down, max value round up
+                    print()
+                    exit_min_build_year = False
+                    while exit_min_build_year == False:
+                        min_build_year_input = input("Enter minimum build_year (Enter NO if No Min): ")
+                        print()
+                        if min_build_year_input.strip().upper() != "NO":
+                            min_build_year_confirmation = input(
+f"""
+You entered {min_build_year_input} build_year
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                        else:
+                            min_build_year_confirmation = input(
+"""
+You did not enter a minimum build_year 
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                        print()
+                        if min_build_year_confirmation == "1":
+                            exit_min_build_year = True
+                        elif min_build_year_confirmation == "2":
+                            continue
+                        else:
+                            print("Invalid input")
+                            print("Please enter the number 1 or 2")
+                            print()
+
+                    exit_max_build_year = False
+                    while exit_max_build_year == False:
+                        max_build_year_input = input("Enter maximum build_year (Enter NO if No Max): ")
+                        print()
+                        if max_build_year_input.strip().upper() != "NO":
+                            max_build_year_confirmation = input(
+f"""
+You entered {max_build_year_input} build_year
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                        else:
+                            max_build_year_confirmation = input(
+"""
+You did not enter a maximum build_year
+Enter 1 to confirm 
+Enter 2 to re-enter the value
+""")
+                        print()
+                        if max_build_year_confirmation == "1":
+                            exit_max_build_year = True
+                        elif max_build_year_confirmation == "2":
+                            continue
+                        else:
+                            print("Invalid input")
+                            print("Please enter the number 1 or 2")
+                            print()
+
+                    build_year_filter_check = f"Min build_year: {min_build_year_input} | Max build_year: {max_build_year_input}"
+                    exit_build_year_filters = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+            show_chosen_filters()
+
+            exit_floor_level_filters = False
+            while exit_floor_level_filters == False:
+                query = input(
+"""
+Do you want to insert floor level filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_floor_level_filters = True
+                elif query == "1":
+                    exit_floor_level_choice = False
+                    while exit_floor_level_choice == False:
+                        query = input(
+"""
+Enter 1 for Ground
+Enter 2 for Low
+Enter 3 for Mid
+Enter 4 for High
+Enter 5 for Penthouse
+""")
+                        print()
+                        if query == "1":
+                            floor_level_filter_check = "Ground"
+                        elif query == "2":
+                            floor_level_filter_check = "Low"
+                        elif query == "3":
+                            floor_level_filter_check = "Mid"
+                        elif query == "4":
+                            floor_level_filter_check = "High"
+                        elif query == "5":
+                            floor_level_filter_check = "Penthouse"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2 or 3")
+                            print()
+                            continue
+                        exit_floor_level_filters = True
+                        exit_floor_level_choice = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+                    continue
+            show_chosen_filters()
+
+            exit_furnishing_filters = False
+            while exit_furnishing_filters == False:
+                query = input(
+"""
+Do you want to insert furnishing filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_furnishing_filters = True
+                elif query == "1":
+                    exit_furnishing_choice = False
+                    while exit_furnishing_choice == False:
+                        query = input(
+"""
+Enter 1 for Unfurnished
+Enter 2 for Partially Furnished
+Enter 3 for Fully Furnished
+""")
+                        print()
+                        if query == "1":
+                            furnishing_filter_check = "Unfurnished"
+                        elif query == "2":
+                            furnishing_filter_check = "Partially Furnished"
+                        elif query == "3":
+                            furnishing_filter_check = "Fully Furnished"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2 or 3")
+                            print()
+                            continue
+                        exit_furnishing_filters = True
+                        exit_furnishing_choice = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+                    continue
+            show_chosen_filters()
+
+            exit_listed_date_filters = False
+            while exit_listed_date_filters == False:
+                query = input(
+"""
+Do you want to insert listed date filters? 
+Enter 1 for Yes 
+Enter 2 for NO
+""")
+                print()
+                if query == "2":
+                    exit_listed_date_filters = True
+                elif query == "1":
+                    exit_listed_date_choice = False
+                    while exit_listed_date_choice == False:
+                        query = input(
+"""
+Enter 1 for Within 3 Days
+Enter 2 for Within 1 Week
+Enter 3 for Within 2 Weeks
+Enter 4 for Within 1 Month
+""")
+                        print()
+                        if query == "1":
+                            listed_date_filter_check = "Within 3 Days"
+                        elif query == "2":
+                            listed_date_filter_check = "Within 1 Week"
+                        elif query == "3":
+                            listed_date_filter_check = "Within 2 Weeks"
+                        elif query == "4":
+                            listed_date_filter_check = "Within 1 Month"
+                        else:
+                            print("Invalid input")
+                            print("Please enter the numbers 1,2,3 or 4")
+                            print()
+                            continue
+                        exit_listed_date_filters = True
+                        exit_listed_date_choice = True
+                else:
+                    print("Invalid input")
+                    print("Please enter the number 1 or 2")
+                    print()
+                    continue
+            show_chosen_filters()
+
+            exit_additional_filters = True
 
         else:
             print("Invalid input")
@@ -260,9 +887,9 @@ def webscrape_PropGuru():
     url_base = "https://www.propertyguru.com.sg/property-for-"
 
     if rent_or_sell_query == "RENT":
-        url_base += "rent/1?freetext="
+        url_base += "rent?market=residential&listing_type=rent&freetext="
     else:
-        url_base += "sale/1?freetext="
+        url_base += "sale?market=residential&listing_type=sale&freetext="
 
     list = key_word.split(" ")
     for word in list:
@@ -271,26 +898,50 @@ def webscrape_PropGuru():
         else:
             url_base += word
 
+    if property_type_filter_check != "NIL":
+        if property_type_filter_check == "Condo":
+            url_base += "&property_type=N&property_type_code[]=CONDO&property_type_code[]=APT&property_type_code[]=WALK&property_type_code[]=CLUS&property_type_code[]=EXCON"
+        elif property_type_filter_check == "Landed":
+            url_base += "&property_type=L&property_type_code[]=TERRA&property_type_code[]=DETAC&property_type_code[]=SEMI&property_type_code[]=CORN&property_type_code[]=LBUNG&property_type_code[]=BUNG&property_type_code[]=SHOPH&property_type_code[]=RLAND&property_type_code[]=TOWN&property_type_code[]=CON&property_type_code[]=LCLUS"
+        elif property_type_filter_check == "HDB":
+            url_base += "&property_type=H&property_type_code[]=1R&property_type_code[]=2A&property_type_code[]=2I&property_type_code[]=2S&property_type_code[]=3A&property_type_code[]=3NG&property_type_code[]=3Am&property_type_code[]=3NGm&property_type_code[]=3I&property_type_code[]=3Im&property_type_code[]=3S&property_type_code[]=3STD&property_type_code[]=4A&property_type_code[]=4NG&property_type_code[]=4S&property_type_code[]=4I&property_type_code[]=4STD&property_type_code[]=5A&property_type_code[]=5I&property_type_code[]=5S&property_type_code[]=6J&property_type_code[]=EA&property_type_code[]=EM&property_type_code[]=MG&property_type_code[]=TE"
+
+    if price_filter_check != "NIL":
+        if min_price_input != "NO":
+            url_base += f"&minprice={min_price_input}"
+        if max_price_input != "NO":
+            url_base += f"&maxprice={max_price_input}"
+
+    if bedroom_filter_check != "NIL":
+        url_base += f"&beds[]={bedroom_filter_check}"
+
+    if floor_size_filter_check != "NIL":
+        if min_floor_size_input != "NO":
+            url_base += f"&minsize={min_floor_size_input}"
+        if max_floor_size_input != "NO":
+            url_base += f"&maxsize={max_floor_size_input}"
+
+    if psf_filter_check != "NIL":
+        if min_psf_input != "NO":
+            url_base += f"&minprice={min_psf_input}"
+        if max_psf_input != "NO":
+            url_base += f"&maxprice={max_psf_input}"
+
+    if bathroom_filter_check != "NIL":
+        url_base += f"&baths[]={bathroom_filter_check}"
+
+    if tenure_filter_check = "NIL":
+            
+    build_year_filter_check = "NIL"  # Done
+    floor_level_filter_check = "NIL"  # Done
+    furnishing_filter_check = "NIL"  # Done
+    listed_date_filter_check = "NIL"  # Done
+
+
     url = url_base
     browser.get(url)
     page = requests.get(url)
     soup = BeautifulSoup(browser.page_source, "html.parser")
-
-    # Check for all possible property type labels
-    property_type_filters = ["HDB Flat"]
-    property_type_scout = soup.find_all(class_="property-type-filter-select-all icon-checkbox")
-    for option in property_type_scout:
-        property_type_filters.append(option.text.strip())
-
-    # Check for all lease year types
-    lease_year_type_filters = []
-    # PRIVATE NOTE TO SELF: This is a very good example of cancelling extra spaces found in the HTML code - if you copy
-    # and paste the class name u will return a None value because of the extra spaces in between
-    lease_year_type_section = soup.find("div", {
-        "class": "search-field tenure checkbox-multi-column search-filter-js-content param-tenure js-form-group btn-group tide-to tide-to-listing_type"})
-    lease_year_type_scout = lease_year_type_section.find_all("ul", {"class": "checkbox-tree"})
-    for option in lease_year_type_scout:
-        lease_year_type_filters.append(option.text.strip())
 
     page_counter = 1
     exit_main = False
@@ -304,8 +955,8 @@ def webscrape_PropGuru():
         list_of_listing_id = []
         for listing_id in listing_id_scout:
             index_number = listing_id.rfind('=')
-            if listing_id[index_number + 2:len(listing_id)-1] not in list_of_listing_id:
-                list_of_listing_id.append(listing_id[index_number + 2:len(listing_id)-1])
+            if listing_id[index_number + 2:len(listing_id) - 1] not in list_of_listing_id:
+                list_of_listing_id.append(listing_id[index_number + 2:len(listing_id) - 1])
 
         for listing in bowls:
             floor_area = "NIL"
@@ -319,32 +970,32 @@ def webscrape_PropGuru():
                 break
 
             try:
-                street_address = listing.find("span", {"itemprop" : "streetAddress"}).text.strip()
+                street_address = listing.find("span", {"itemprop": "streetAddress"}).text.strip()
             except AttributeError:
                 break
 
             block_number_scout = street_address.split(" ")
             block_number = block_number_scout[0]
-            if not block_number[0].isdigit(): #ASSUMES that if the first character of block number is a number
-                block_number = "" ###NEED FIND A WAY
+            if not block_number[0].isdigit():  # ASSUMES that if the first character of block number is a number
+                block_number = ""  ###NEED FIND A WAY
 
             try:
-                price = listing.find("span", {"class" : "price"}).text.strip()
+                price = listing.find("span", {"class": "price"}).text.strip()
             except AttributeError:
                 break
 
             try:
-                bed_count = listing.find("span", {"class" : "bed"}).text.strip()
+                bed_count = listing.find("span", {"class": "bed"}).text.strip()
             except AttributeError:
                 break
 
             try:
-                bath_count = listing.find("span", {"class" : "bath"}).text.strip()
+                bath_count = listing.find("span", {"class": "bath"}).text.strip()
             except AttributeError:
                 break
 
             try:
-                area_psf_section = listing.find_all("li", {"class" : "listing-floorarea pull-left"})
+                area_psf_section = listing.find_all("li", {"class": "listing-floorarea pull-left"})
                 for option in area_psf_section:
                     if "sqft" in option.text.strip():
                         floor_area = option.text.strip()
@@ -353,128 +1004,36 @@ def webscrape_PropGuru():
             except AttributeError:
                 break
 
-            distance_to_transport = ""
-            try:
-                distance_to_transport_recipes = listing.find_all("li")
-                for dish in distance_to_transport_recipes:
-                    if "mins" in dish.text.strip():
-                        distance_to_transport = dish.text.strip()
-                        break
-            except AttributeError:
-                distance_to_transport = "NIL"
-            if distance_to_transport == "":
-                distance_to_transport = "NIL"
+            # FOR CHECKING/IF WE WANT TO READ THE DATA OFF PYTHON CONSOLE
 
-            tagging_info_section = listing.find("ul", {"class" : "listing-property-type"})
-            taggings = tagging_info_section.find_all("li", {"class" : ""})
-
-            property_type_known = False
-            built_year_known = False
-            lease_year_type_known = False
-            exit_tagging_1 = False
-            exit_tagging_2 = False
-            exit_tagging_3 = False
-
-            while exit_tagging_1 == False:
-                try:
-                    tagging_1 = taggings[0].text.strip()
-                except IndexError:
-                    property_type = "NIL"
-                    lease_year_type = "NIL"
-                    built_year = "NIL"
-                    exit_tagging_1 = True
-                    exit_tagging_2 = True
-                    exit_tagging_3 = True
-                if tagging_1 in property_type_filters:
-                    property_type = tagging_1
-                    property_type_known = True
-                    exit_tagging_1 = True
-                elif tagging_1 in lease_year_type_filters:
-                    property_type = "NIL"
-                    lease_year_type = tagging_1
-                    lease_year_type_known = True
-                    exit_tagging_1 = True
-                elif "Built" in tagging_1:
-                    property_type = "NIL"
-                    lease_year_type = "NIL"
-                    built_year = tagging_1
-                    built_year_known = True
-                    exit_tagging_1 = True
-                else:
-                    print("FAULTY CODE#1")
-
-            while exit_tagging_2 == False:
-                try:
-                    tagging_2 = taggings[1].text.strip()
-                except IndexError:
-                    if property_type_known == False:
-                       property_type = "NIL"
-                    elif built_year_known == False:
-                        built_year = "NIL"
-                    elif lease_year_type_known == False:
-                        lease_year_type = "NIL"
-                    exit_tagging_2 = True
-                    exit_tagging_3 = True
-                if tagging_2 in lease_year_type_filters:
-                    lease_year_type = tagging_2
-                    lease_year_type_known = True
-                    exit_tagging_2 = True
-                elif "Built" in tagging_2:
-                    lease_year_type = "NIL"
-                    built_year = tagging_2
-                    exit_tagging_2 = True
-                    exit_tagging_3 = True
-                else:
-                    print("FAULTY CODE#2")
-
-            while exit_tagging_3 == False:
-                try:
-                    tagging_3 = taggings[2].text.strip()
-                    built_year = tagging_3
-                    exit_tagging_3 = True
-                except IndexError:
-                    if property_type_known == False:
-                       property_type = "NIL"
-                    elif built_year_known == False:
-                        built_year = "NIL"
-                    elif lease_year_type_known == False:
-                        lease_year_type = "NIL"
-                    exit_tagging_3 = True
-
-            try:
-                lease_years_left = (int(lease_year_type[:2]) - (int(todays_date.year) - int(built_year[-4:])))
-            except ValueError:
-                lease_years_left = "NIL"
-
-            #FOR CHECKING/IF WE WANT TO READ THE DATA OFF PYTHON CONSOLE
             print(f"Listing[{listing_counter}]")
-            print(f"Street Address: {street_address}")
+            #print(f"Street Address: {street_address}")
             print(f"Price: {price}")
             print(f"Bedrooms: {bed_count}")
             print(f"Bathrooms: {bath_count}")
             print(f"Sqft: {floor_area}")
             print(f"PSF: {psf_value[3:-4]}")
-            print(f"Distance to Nearest Transport: {distance_to_transport}")
-            print(f"Property Type: {property_type}")
-            print(f"Built Year: {built_year}")
-            print(f"Type of Leasehold: {lease_year_type}")
-            print(f"Lease years left: {lease_years_left}")
+            #print(f"Distance to Nearest Transport: {distance_to_transport}")
+            #print(f"Property Type: {property_type}")
+            #print(f"Built Year: {built_year}")
+            #print(f"Type of Leasehold: {lease_year_type}")
+            #print(f"Lease years left: {lease_years_left}")
             print(f"PPG Link: {ppg_link}")
             print(f"Block number: {block_number}")
             print()
 
-            #FINAL PRODUCT ON EXCEL
-            street_address_column.append(street_address)
+            # FINAL PRODUCT ON EXCEL
+            #street_address_column.append(street_address)
             price_column.append(price)
             bed_count_column.append(bed_count)
             bath_count_column.append(bath_count)
             floor_area_column.append(floor_area)
             psf_column.append(psf_value)
-            distance_to_nearest_transport_column.append(distance_to_transport)
-            property_type_column.append(property_type)
-            built_year_column.append(built_year)
-            type_of_leasehold_column.append(lease_year_type)
-            lease_years_left_column.append(lease_years_left)
+            #distance_to_nearest_transport_column.append(distance_to_transport)
+            #property_type_column.append(property_type)
+            #built_year_column.append(built_year)
+            #type_of_leasehold_column.append(lease_year_type)
+            #lease_years_left_column.append(lease_years_left)
             ppg_link_column.append(ppg_link)
             block_number_column.append(block_number)
 
@@ -501,72 +1060,76 @@ def webscrape_PropGuru():
             else:
                 url_base += word
 
-        browser = webdriver.Chrome(service = s)
+        browser = webdriver.Chrome(service=s)
 
         url = url_base
         browser.get(url)
         soup = BeautifulSoup(browser.page_source, "html.parser")
 
-    #NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
-    #Openpyxl is an alternative module but idk why it just keeps bugging out for me
+    # NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
+    # Openpyxl is an alternative module but idk why it just keeps bugging out for me
     workbook = xlsxwriter.Workbook(f"{key_word}" + ".xlsx")
     worksheet = workbook.add_worksheet("Data")
 
-    #STOPPED HERE READJUST HEADERS FOR XLSXRWITER FORMAT
-    #Fill up headers
+    # Fill up headers
     worksheet.write(0, 0, "Listing ID")
-    worksheet.write(0, 1, "PPG Link ID")
-    worksheet.write(0, 2, "Street Address")
-    worksheet.write(0, 3, "Price")
-    worksheet.write(0, 4, "Bedrooms")
-    worksheet.write(0, 5, "Bathrooms")
-    worksheet.write(0, 6, "Sqft")
-    worksheet.write(0, 7, "PSF")
-    worksheet.write(0, 8, "Distance to Nearest Transport")
-    worksheet.write(0, 9, "Property Type")
-    worksheet.write(0, 10, "Built Year")
-    worksheet.write(0, 11, "Type of Leasehold")
-    worksheet.write(0, 12, "Lease years left")
-    worksheet.write(0, 13, "PPG Link")
-    worksheet.write(0, 14, "Block")
+    worksheet.write(0, 1, "Agent")
+    worksheet.write(0, 2, "Bedrooms")
+    worksheet.write(0, 3, "Bathrooms")
+    worksheet.write(0, 4, "Block")
+    worksheet.write(0, 5, "Floor")
+    worksheet.write(0, 6, "Condition")
+    worksheet.write(0, 7, "Price")
+    worksheet.write(0, 8, "Sqft")
+    worksheet.write(0, 9, "Psf")
+    worksheet.write(0, 10, "PPG Link")
+    worksheet.write(0, 11, "PPG Link ID")
 
+    #LISTING ID CORRECT
     number = 0
     for row_number in range(1, listing_counter + 1):
         number += 1
         worksheet.write(row_number, 0, number)
 
-    list_of_listing_id_column_rowcounter = 0
-    for entry in list_of_listing_id:
-        list_of_listing_id_column_rowcounter += 1
-        worksheet.write(list_of_listing_id_column_rowcounter, 1, entry)
+    #AGENT KIV
 
-    street_address_column_rowcounter = 0
-    for entry in street_address_column:
-        street_address_column_rowcounter += 1
-        worksheet.write(street_address_column_rowcounter, 2, entry)
+    #BEDROOMS CORRECT
+    bed_count_column_rowcounter = 0
+    for entry in bed_count_column:
+        bed_count_column_rowcounter += 1
+        worksheet.write(bed_count_column_rowcounter, 2, entry)
 
+    #BATHROOMS CORRECT
+    bath_count_column_rowcounter = 0
+    for entry in bath_count_column:
+        bath_count_column_rowcounter += 1
+        worksheet.write(bath_count_column_rowcounter, 3, entry)
+
+    #BLOCK IN PROGRESS
+    block_number_rowcounter = 0
+    for entry in block_number_column:
+        block_number_rowcounter += 1
+        worksheet.write(block_number_rowcounter, 4, entry)
+
+    #FLOOR KIV
+
+    #CONDITION KIV
+
+    #PRICE CORRECT
     price_column_rowcounter = 0
     for entry in price_column:
         modified_price_input = "$" + entry
         price_column_rowcounter += 1
-        worksheet.write(price_column_rowcounter, 3, modified_price_input)
+        worksheet.write(price_column_rowcounter, 7, modified_price_input)
 
-    bed_count_column_rowcounter = 0
-    for entry in bed_count_column:
-        bed_count_column_rowcounter += 1
-        worksheet.write(bed_count_column_rowcounter, 4, entry)
-
-    bath_count_column_rowcounter = 0
-    for entry in bath_count_column:
-        bath_count_column_rowcounter += 1
-        worksheet.write(bath_count_column_rowcounter, 5, entry)
-
+    #SQFT CORRECT
     floor_area_column_rowcounter = 0
     for entry in floor_area_column:
         modified_floor_area_input = entry.replace(" sqft", "")
         floor_area_column_rowcounter += 1
-        worksheet.write(floor_area_column_rowcounter, 6, modified_floor_area_input)
+        worksheet.write(floor_area_column_rowcounter, 8, modified_floor_area_input)
 
+    #PSF CORRECT
     psf_column_rowcounter = 0
     for entry in psf_column:
         modified_psf_input_draft = ""
@@ -575,47 +1138,22 @@ def webscrape_PropGuru():
                 modified_psf_input_draft += character
         modified_psf_input = round(float(modified_psf_input_draft))
         psf_column_rowcounter += 1
-        worksheet.write(psf_column_rowcounter, 7, modified_psf_input)
+        worksheet.write(psf_column_rowcounter, 9, modified_psf_input)
 
-    distance_to_nearest_transport_column_rowcounter = 0
-    for entry in distance_to_nearest_transport_column:
-        distance_to_nearest_transport_column_rowcounter += 1
-        worksheet.write(distance_to_nearest_transport_column_rowcounter, 8, entry)
-
-    property_type_column_rowcounter = 0
-    for entry in property_type_column:
-        property_type_column_rowcounter += 1
-        worksheet.write(property_type_column_rowcounter, 9, entry)
-
-    built_year_column_rowcounter = 0
-    for entry in built_year_column:
-        built_year_column_rowcounter += 1
-        if entry == "NIL":
-            worksheet.write(built_year_column_rowcounter, 10, entry)
-        else:
-            worksheet.write(built_year_column_rowcounter, 10, entry[7:])
-
-    type_of_leasehold_column_rowcounter = 0
-    for entry in type_of_leasehold_column:
-        type_of_leasehold_column_rowcounter += 1
-        worksheet.write(type_of_leasehold_column_rowcounter, 11, entry)
-
-    lease_years_left_column_rowcounter = 0
-    for entry in lease_years_left_column:
-        lease_years_left_column_rowcounter += 1
-        worksheet.write(lease_years_left_column_rowcounter, 12, entry)
-
+    #PPG LINK CORRECT
     ppg_link_rowcounter = 0
     for entry in ppg_link_column:
         ppg_link_rowcounter += 1
-        worksheet.write(ppg_link_rowcounter, 13, entry)
+        worksheet.write(ppg_link_rowcounter, 10, entry)
 
-    block_number_rowcounter = 0
-    for entry in block_number_column:
-        block_number_rowcounter += 1
-        worksheet.write(block_number_rowcounter, 14, entry)
+    #PPG LINK ID CORRECT
+    list_of_listing_id_column_rowcounter = 0
+    for entry in list_of_listing_id:
+        list_of_listing_id_column_rowcounter += 1
+        worksheet.write(list_of_listing_id_column_rowcounter, 11, entry)
 
     workbook.close()
+
 
 webscrape_PropGuru()
 
