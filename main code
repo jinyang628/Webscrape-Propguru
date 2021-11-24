@@ -10,7 +10,8 @@ PROGRESS
     - SELL ready!
     - Excel ready!
     - Listing ID ready!
-    - PPG LINK ready
+    - PPG LINK ready!
+    - FILTER ready!
 
 #1
 Issue: if you enter rubbish into the keyword prompt, where rubbish is anything that the website's search engine will not return
@@ -160,21 +161,21 @@ Enter 1 for YES
 Enter 2 for NO
 """)
         print()
+        property_type_filter_check = "NIL"  # Done
+        price_filter_check = "NIL"  # Done
+        bedroom_filter_check = "NIL"  # Done
+        floor_size_filter_check = "NIL"  # Done
+        psf_filter_check = "NIL"  # Done
+        bathroom_filter_check = "NIL"  # Done
+        tenure_filter_check = "NIL"  # Done
+        build_year_filter_check = "NIL"  # Done
+        floor_level_filter_check = "NIL"  # Done
+        furnishing_filter_check = "NIL"  # Done
+        listed_date_filter_check = "NIL"  # Done
+
         if query == "2":
             exit_additional_filters = True
         elif query == "1":
-            property_type_filter_check = "NIL" #Done
-            price_filter_check = "NIL" #Done
-            bedroom_filter_check = "NIL" #Done
-            floor_size_filter_check = "NIL"  # Done
-            psf_filter_check = "NIL"  # Done
-            bathroom_filter_check = "NIL"  # Done
-            tenure_filter_check = "NIL" #Done
-            build_year_filter_check = "NIL" #Done
-            floor_level_filter_check = "NIL" #Done
-            furnishing_filter_check = "NIL" #Done
-            listed_date_filter_check = "NIL" #Done
-
             exit_property_type_filters = False
             while exit_property_type_filters == False:
                 query = input(
@@ -930,8 +931,10 @@ Enter 4 for Within 1 Month
     if bathroom_filter_check != "NIL":
         url_base += f"&baths[]={bathroom_filter_check}"
 
-    if tenure_filter_check = "NIL":
-            
+    if tenure_filter_check != "NIL":
+        url_base += f"&tenure[]=L"
+        
+
     build_year_filter_check = "NIL"  # Done
     floor_level_filter_check = "NIL"  # Done
     furnishing_filter_check = "NIL"  # Done
@@ -1068,7 +1071,8 @@ Enter 4 for Within 1 Month
 
     # NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
     # Openpyxl is an alternative module but idk why it just keeps bugging out for me
-    workbook = xlsxwriter.Workbook(f"{key_word}" + ".xlsx")
+    save_location = "/Users/jinyangchen/PycharmProjects/Webscrape PropertyGuru/"
+    workbook = xlsxwriter.Workbook(save_location + f"{key_word}" + ".xlsx")
     worksheet = workbook.add_worksheet("Data")
 
     # Fill up headers
