@@ -18,16 +18,75 @@ def task(url_submission):
     page = requests.get(url_submission)
     soup = BeautifulSoup(browser.page_source, "html.parser")
     price = (soup.find("span", {"class":"element-label price"})).text.strip()
-    #bedroom_number = (soup.find("span", {"itemprop":"numberOfRooms"})).text.strip()
-    bedroom_number = (soup.find("div"))
-    bathroom_number = (soup.find())
-    print(bathroom_number)
+    bedroom_number = (soup.find("div", {"class":"property-info-element beds"})).text.strip()
+    bathroom_number = (soup.find("div", {"class":"property-info-element baths"})).text.strip()
+    floor_size_scout = (soup.find("div", {"class":"property-info-element area"})).text.strip()
+    floor_size = ""
+    for char in floor_size_scout:
+        if char.isdigit():
+            floor_size += char
+    floor_level_scout = (soup.find("tr", {"class": "property-attr floor-level"}))
+    floor_level = floor_level_scout.find(class_ = "value-block").text.strip()
+    block_number_scout = (soup.find("span", {"itemprop":"streetAddress"})).text.strip()
+    block_number = (block_number_scout.split(" "))[0]
+    psf = round(int(price)/int(floor_size))
 
+    print(f"Price: {price}")
+    print(f"Bedroom number: {bedroom_number}")
+    print(f"Bathroom number: {bathroom_number}")
+    print(f"Floor size: {floor_size}")
+    print(f"Floor level: {floor_level}")
+    print(f"Block number: {block_number}")
+    print(f"PSF: {psf}")
 
+    return [bedroom_number, bathroom_number, block_number, floor_level, price, floor_size, psf, url_submission]
 
+def write_in_excel_row(number):
+    global worksheet
+    global info_list
 
+    # LISTING ID
+    worksheet.write(number, 0, number)
+
+    # AGENT
+    worksheet.write(number, 1, "Competitor")
+
+    # BEDROOMS
+    worksheet.write(number, 2, info_list[0])
+
+    # BATHROOMS
+    worksheet.write(number, 3, info_list[1])
+
+    # BLOCK NUMBER
+    worksheet.write(number, 4, info_list[2])
+
+    # FLOOR
+    worksheet.write(number, 5, info_list[3])
+
+    # CONDITION BLANK
+
+    # PRICE
+    worksheet.write(number, 7, info_list[4])
+
+    # FLOOR SIZE
+    worksheet.write(number, 8, info_list[5])
+
+    # PSF
+    worksheet.write(number, 9, info_list[6])
+
+    # PPG LINK
+    worksheet.write(number, 10, info_list[7])
+
+    # PPG LINK ID CORRECT
+    list_of_listing_id_column_rowcounter = 0
+    for entry in list_of_listing_id:
+        list_of_listing_id_column_rowcounter += 1
+        worksheet.write(list_of_listing_id_column_rowcounter, 11, entry)
 
 def webscrape():
+    global worksheet
+    global info_list
+
     exit_URL_entry = False
     counter = 0
     list_of_URLs = []
@@ -46,113 +105,37 @@ If you have finished submitting all your URLs, enter DONE
         else:
             exit_URL_entry = True
 
+    file_name_query = input("Enter filename: ")
+
+    #will need to change save_location based on user
+    save_location = "/Users/jinyangchen/PycharmProjects/Webscrape PropertyGuru/"
+
+    # NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
+    # Openpyxl is an alternative module but idk why it just keeps bugging out for me
+    workbook = xlsxwriter.Workbook(save_location + f"{file_name_query}" + ".xlsx")
+    worksheet = workbook.add_worksheet("Data")
+
+    # Fill up headers
+    worksheet.write(0, 0, "Listing ID")
+    worksheet.write(0, 1, "Agent")
+    worksheet.write(0, 2, "Bedrooms")
+    worksheet.write(0, 3, "Bathrooms")
+    worksheet.write(0, 4, "Block")
+    worksheet.write(0, 5, "Floor")
+    worksheet.write(0, 6, "Condition")
+    worksheet.write(0, 7, "Price")
+    worksheet.write(0, 8, "Sqft")
+    worksheet.write(0, 9, "Psf")
+    worksheet.write(0, 10, "PPG Link")
+    worksheet.write(0, 11, "PPG Link ID")
 
     exit_main = False
+    counter = 0
     while exit_main == False:
-        #street_address_column = []
-        price_column = []
-        bed_count_column = []
-        bath_count_column = []
-        floor_area_column = []
-        psf_column = []
-        # distance_to_nearest_transport_column = []
-        # property_type_column = []
-        # built_year_column = []
-        # type_of_leasehold_column = []
-        # lease_years_left_column = []
-        ppg_link_column = []
-        block_number_column = []
+        info_list = task(list_of_URLs[counter])
+        counter += 1
+        if counter == len(list_of_URLs):
+            exit_main = True
+        write_in_excel_row(counter)
 
-        # NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
-        # Openpyxl is an alternative module but idk why it just keeps bugging out for me
-        save_location = "/Users/jinyangchen/PycharmProjects/Webscrape PropertyGuru/"
-        workbook = xlsxwriter.Workbook(save_location + f"{key_word}" + ".xlsx")
-        worksheet = workbook.add_worksheet("Data")
-
-        # Fill up headers
-        worksheet.write(0, 0, "Listing ID")
-        worksheet.write(0, 1, "Agent")
-        worksheet.write(0, 2, "Bedrooms")
-        worksheet.write(0, 3, "Bathrooms")
-        worksheet.write(0, 4, "Block")
-        worksheet.write(0, 5, "Floor")
-        worksheet.write(0, 6, "Condition")
-        worksheet.write(0, 7, "Price")
-        worksheet.write(0, 8, "Sqft")
-        worksheet.write(0, 9, "Psf")
-        worksheet.write(0, 10, "PPG Link")
-        worksheet.write(0, 11, "PPG Link ID")
-
-        # LISTING ID CORRECT
-        number = 0
-        for row_number in range(1, listing_counter + 1):
-            number += 1
-            worksheet.write(row_number, 0, number)
-
-        # AGENT KIV
-
-        # BEDROOMS CORRECT
-        bed_count_column_rowcounter = 0
-        for entry in bed_count_column:
-            bed_count_column_rowcounter += 1
-            worksheet.write(bed_count_column_rowcounter, 2, entry)
-
-        # BATHROOMS CORRECT
-        bath_count_column_rowcounter = 0
-        for entry in bath_count_column:
-            bath_count_column_rowcounter += 1
-            worksheet.write(bath_count_column_rowcounter, 3, entry)
-
-        # BLOCK IN PROGRESS
-        block_number_rowcounter = 0
-        for entry in block_number_column:
-            block_number_rowcounter += 1
-            worksheet.write(block_number_rowcounter, 4, entry)
-
-        # FLOOR KIV
-
-        # CONDITION KIV
-
-        # PRICE CORRECT
-        price_column_rowcounter = 0
-        for entry in price_column:
-            modified_price_input = "$" + entry
-            price_column_rowcounter += 1
-            worksheet.write(price_column_rowcounter, 7, modified_price_input)
-
-        # SQFT CORRECT
-        floor_area_column_rowcounter = 0
-        for entry in floor_area_column:
-            modified_floor_area_input = entry.replace(" sqft", "")
-            floor_area_column_rowcounter += 1
-            worksheet.write(floor_area_column_rowcounter, 8, modified_floor_area_input)
-
-        # PSF CORRECT
-        psf_column_rowcounter = 0
-        for entry in psf_column:
-            modified_psf_input_draft = ""
-            for character in entry:
-                if character.isdigit() or character == ".":
-                    modified_psf_input_draft += character
-            modified_psf_input = round(float(modified_psf_input_draft))
-            psf_column_rowcounter += 1
-            worksheet.write(psf_column_rowcounter, 9, modified_psf_input)
-
-        # PPG LINK CORRECT
-        ppg_link_rowcounter = 0
-        for entry in ppg_link_column:
-            ppg_link_rowcounter += 1
-            worksheet.write(ppg_link_rowcounter, 10, entry)
-
-        # PPG LINK ID CORRECT
-        list_of_listing_id_column_rowcounter = 0
-        for entry in list_of_listing_id:
-            list_of_listing_id_column_rowcounter += 1
-            worksheet.write(list_of_listing_id_column_rowcounter, 11, entry)
-
-
-
-    #browser.quit()
-
-
-task("https://www.propertyguru.com.sg/listing/22294754/for-sale-seraya-residences")
+    browser.quit()
