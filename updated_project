@@ -13,24 +13,40 @@ import re
 s = Service(ChromeDriverManager().install())
 
 def task(url_submission):
+    global condo
+    global hdb
+    global rent
+    global sale
     global browser
 
     soup = BeautifulSoup(browser.page_source, "html.parser")
+
+    #All 4 need (rent slight modification to remove /mo)
     try:
-        price = (soup.find("span", {"class":"element-label price"})).text.strip()
+        price_modified = (soup.find("span", {"class":"element-label price"})).text.strip()
+        if rent == True:
+            price = ""
+            for char in price_modified:
+                if char.isdigit():
+                    price += char
+        elif sale == True:
+            price = price_modified
     except AttributeError:
         price = ""
 
+    #All 4 need
     try:
         bedroom_number = (soup.find("div", {"class":"property-info-element beds"})).text.strip()
     except AttributeError:
         bedroom_number = ""
 
+    #All 4 need
     try:
         bathroom_number = (soup.find("div", {"class":"property-info-element baths"})).text.strip()
     except AttributeError:
         bathroom_number = ""
 
+    #All 4 need
     try:
         floor_size_scout = (soup.find("div", {"class":"property-info-element area"})).text.strip()
         floor_size = ""
@@ -40,6 +56,7 @@ def task(url_submission):
     except AttributeError:
         floor_size = ""
 
+    #All 4 need
     try:
         floor_level_scout1 = (soup.find("tr", {"class": "property-attr floor-level"}))
         floor_level_scout2 = floor_level_scout1.find(class_ = "value-block").text.strip()
@@ -48,29 +65,45 @@ def task(url_submission):
     except AttributeError:
         floor_level = ""
 
-    try:
-        block_number_scout = (soup.find("span", {"itemprop":"streetAddress"})).text.strip()
-        block_number = (block_number_scout.split(" "))[0]
-    except AttributeError:
-        block_number = ""
-
-    if block_number == "":
+    #Only HDB
+    if hdb == True:
         try:
-            block_number_scout = (soup.find("div", {"class":"listing-title text-transform-none"})).text.strip()
-            block_number_scout_list = block_number_scout.split(" ")
-            block_number = block_number_scout_list[1]
+            block_number_scout = (soup.find("span", {"itemprop":"streetAddress"})).text.strip()
+            block_number = (block_number_scout.split(" "))[0]
         except AttributeError:
             block_number = ""
 
-    modified_price = ""
-    for char in price:
-        if char.isdigit():
-            modified_price += char
+        if block_number == "":
+            try:
+                block_number_scout = (soup.find("div", {"class":"listing-title text-transform-none"})).text.strip()
+                block_number_scout_list = block_number_scout.split(" ")
+                block_number = block_number_scout_list[1]
+            except AttributeError:
+                block_number = ""
 
-    try:
-        psf = round(int(modified_price)/int(floor_size))
-    except AttributeError:
-        psf = ""
+    #Only Sale
+    if sale == True:
+        modified_price = ""
+        for char in price:
+            if char.isdigit():
+                modified_price += char
+
+        try:
+            psf = round(int(modified_price)/int(floor_size))
+        except AttributeError:
+            psf = ""
+
+    #Only Rental
+    if rent == True:
+        try:
+            furnishing_scout1 = (soup.find("tr", {"class": "property-attr furnishing"}))
+            furnishing = furnishing_scout1.find(class_="value-block").text.strip()
+        except AttributeError:
+            furnishing = ""
+
+    #Only Condo
+    if condo == True:
+        development = (soup.find("div", {"class":"listing-title text-transform-none"}).text.strip()).title()
 
     if hdb == True:
         ppg_link_scout_list = url_submission.split("-")
@@ -78,19 +111,69 @@ def task(url_submission):
     elif condo == True:
         ppg_link_id = url_submission[40:48]
 
-    print(f"Price: {price}")
-    print(f"Bedroom number: {bedroom_number}")
-    print(f"Bathroom number: {bathroom_number}")
-    print(f"Floor size: {floor_size}")
-    print(f"Floor level: {floor_level}")
-    print(f"Block number: {block_number}")
-    print(f"PSF: {psf}")
-    print(f"PPG Link ID: {ppg_link_id}")
-    print()
+    if hdb == True and rent == True:
+        print(f"Price: {price}")
+        print(f"Furnishing: {furnishing}")
+        print(f"Bedroom number: {bedroom_number}")
+        print(f"Bathroom number: {bathroom_number}")
+        print(f"Floor size: {floor_size}")
+        print(f"Floor level: {floor_level}")
+        print(f"Block number: {block_number}")
+        print(f"PPG Link: {url_submission}")
+        print(f"PPG Link ID: {ppg_link_id}")
+        print()
+
+    elif condo == True and rent == True:
+        print(f"Price: {price}")
+        print(f"Furnishing: {furnishing}")
+        print(f"Bedroom number: {bedroom_number}")
+        print(f"Bathroom number: {bathroom_number}")
+        print(f"Floor size: {floor_size}")
+        print(f"Floor level: {floor_level}")
+        print(f"PPG Link: {url_submission}")
+        print(f"PPG Link ID: {ppg_link_id}")
+        print(f"Development: {development}")
+        print()
+
+    elif hdb == True and sale == True:
+        print(f"Price: {price}")
+        print(f"Bedroom number: {bedroom_number}")
+        print(f"Bathroom number: {bathroom_number}")
+        print(f"Floor size: {floor_size}")
+        print(f"Floor level: {floor_level}")
+        print(f"Block number: {block_number}")
+        print(f"PPG Link: {url_submission}")
+        print(f"PPG Link ID: {ppg_link_id}")
+        print(f"Psf: {psf}")
+        print()
+
+    elif condo == True and sale == True:
+        print(f"Price: {price}")
+        print(f"Bedroom number: {bedroom_number}")
+        print(f"Bathroom number: {bathroom_number}")
+        print(f"Floor size: {floor_size}")
+        print(f"Floor level: {floor_level}")
+        print(f"PPG Link: {url_submission}")
+        print(f"PPG Link ID: {ppg_link_id}")
+        print(f"Development: {development}")
+        print(f"Psf: {psf}")
+        print()
 
     browser.close()
 
-    return [bedroom_number, bathroom_number, block_number, floor_level, price, floor_size, psf, url_submission, ppg_link_id]
+    if hdb == True and rent == True:
+        return [bedroom_number, bathroom_number, block_number, furnishing, floor_level, floor_size, price, url_submission, ppg_link_id]
+
+    if condo == True and rent == True:
+        return [bedroom_number, bathroom_number, development, furnishing, floor_level, floor_size, price, url_submission, ppg_link_id]
+
+    if hdb == True and sale == True:
+        return [bedroom_number, bathroom_number, block_number, floor_level, price, floor_size, psf,
+                url_submission, ppg_link_id]
+
+    if condo == True and sale == True:
+        return [development, bedroom_number, bathroom_number, floor_level, price, floor_size, psf,
+                url_submission, ppg_link_id]
 
 def write_in_excel_row(number):
     global worksheet
@@ -102,35 +185,41 @@ def write_in_excel_row(number):
 
     worksheet.write(number, 0, number)
 
-    if hdb == True or (condo == True and rent == True):
+    if hdb == True:
         worksheet.write(number, 1, "Competitor")
+        worksheet.write(number, 2, info_list[0])
+        worksheet.write(number, 3, info_list[1])
+        worksheet.write(number, 4, info_list[2])
+        worksheet.write(number, 5, info_list[3])
+        #CONDITION BLANK
+        worksheet.write(number, 7, info_list[4])
+        worksheet.write(number, 8, info_list[5])
+        worksheet.write(number, 9, info_list[6])
+        worksheet.write(number, 10, info_list[7])
+        worksheet.write(number, 11, info_list[8])
 
-    worksheet.write(number, 2, info_list[0])
+    elif condo == True and sale == True:
+        worksheet.write(number, 1, info_list[0])
+        worksheet.write(number, 2, info_list[1])
+        worksheet.write(number, 3, info_list[2])
+        worksheet.write(number, 4, info_list[3])
+        worksheet.write(number, 6, info_list[4])
+        worksheet.write(number, 7, info_list[5])
+        worksheet.write(number, 8, info_list[6])
+        worksheet.write(number, 9, info_list[7])
+        worksheet.write(number, 10, info_list[8])
 
-    worksheet.write(number, 3, info_list[1])
-
-    # BLOCK NUMBER
-    worksheet.write(number, 4, info_list[2])
-
-    # FLOOR
-    worksheet.write(number, 5, info_list[3])
-
-    # CONDITION BLANK
-
-    # PRICE
-    worksheet.write(number, 7, info_list[4])
-
-    # FLOOR SIZE
-    worksheet.write(number, 8, info_list[5])
-
-    # PSF
-    worksheet.write(number, 9, info_list[6])
-
-    # PPG LINK
-    worksheet.write(number, 10, info_list[7])
-
-    # PPG LINK ID CORRECT
-    worksheet.write(number, 11, info_list[8])
+    elif condo == True and rent == True:
+        worksheet.write(number, 1, "Competitor")
+        worksheet.write(number, 2, info_list[0])
+        worksheet.write(number, 3, info_list[1])
+        worksheet.write(number, 4, info_list[2])
+        worksheet.write(number, 5, info_list[3])
+        worksheet.write(number, 6, info_list[4])
+        worksheet.write(number, 7, info_list[5])
+        worksheet.write(number, 8, info_list[6])
+        worksheet.write(number, 9, info_list[7])
+        worksheet.write(number, 10, info_list[8])
 
 def webscrape():
     global browser
@@ -191,15 +280,19 @@ f"""
 Enter URL {counter} 
 If you have finished submitting all your URLs, enter DONE
 """)
-        if url.upper() != "DONE":
-            list_of_URLs.append(url)
-        else:
+        if url.upper() == "DONE":
             exit_URL_entry = True
+        else:
+            if "http" not in url:
+                print("INVALID INPUT: Not an URL")
+                counter -= 1
+            else:
+                list_of_URLs.append(url)
 
     file_name_query = input("Enter filename: ")
 
     #will need to change save_location based on user
-    save_location = "/Users/jinyangchen/PycharmProjects/Webscrape PropertyGuru/"
+    save_location = "/Users/jinyangchen/PycharmProjects/Webscrape_PropertyGuru/"
 
     # NOTE xlsxwriter does not allow me to modify existing files. It can only create new files
     # Openpyxl is an alternative module but idk why it just keeps bugging out for me
@@ -207,54 +300,80 @@ If you have finished submitting all your URLs, enter DONE
     worksheet = workbook.add_worksheet("Data")
 
     # Fill up headers
-    if hdb == True and sale == True:
-        #A
+    #A
+    if hdb == True and condo == True:
+        print("error arrives here")
         worksheet.write(0, 0, "Listing ID")
 
-        #B
-        if hdb == True or (condo == True and rent == True):
-            worksheet.write(0, 1, "Agent")
-        elif condo == True and sale == True:
-            worksheet.write(0, 1, "Development")
+    #B
+    if hdb == True or (condo == True and rent == True):
+        worksheet.write(0, 1, "Agent")
+    elif condo == True and sale == True:
+        worksheet.write(0, 1, "Development")
 
-        #C
-        worksheet.write(0, 2, "Bedrooms")
+    #C
+    worksheet.write(0, 2, "Bedrooms")
 
-        #D
-        worksheet.write(0, 3, "Bathrooms")
+    #D
+    worksheet.write(0, 3, "Bathrooms")
 
-        #E
-        if hdb == True:
-            worksheet.write(0, 4, "Block")
-        elif condo == True and rent == True:
-            worksheet.write(0, 4, "Development")
-        elif condo == True and sale == True:
-            worksheet.write(0, 4, "Floor")
+    #E
+    if hdb == True:
+        worksheet.write(0, 4, "Block")
+    elif condo == True and rent == True:
+        worksheet.write(0, 4, "Development")
+    elif condo == True and sale == True:
+        worksheet.write(0, 4, "Floor")
 
-        #F
-        if rent == True:
-            worksheet.write(0, 5, "Furnishing")
-        elif hdb == True and sale == True:
-            worksheet.write(0, 5, "Floor")
-        elif condo == True and sale == True:
-            worksheet.write(0, 5, "Condition")
+    #F
+    if rent == True:
+        worksheet.write(0, 5, "Furnishing")
+    elif hdb == True and sale == True:
+        worksheet.write(0, 5, "Floor")
+    elif condo == True and sale == True:
+        worksheet.write(0, 5, "Condition")
 
-        #G
-        if hdb == True:
-            worksheet.write(0, 6, "Condition")
-        elif condo == True and rent == True:
-            worksheet.write(0, 6, "Floor Level")
-        elif condo == True and sale == True:
-            worksheet.write(0, 6, "Price")
+    #G
+    if hdb == True:
+        worksheet.write(0, 6, "Condition")
+    elif condo == True and rent == True:
+        worksheet.write(0, 6, "Floor Level")
+    elif condo == True and sale == True:
+        worksheet.write(0, 6, "Price")
 
-        #H
-        if hdb == True and rent == True:
-            worksheet.write(0, 7, "Floor")
+    #H
+    if hdb == True and rent == True:
+        worksheet.write(0, 7, "Floor")
+    elif condo == True:
+        worksheet.write(0, 7, "Sqft")
+    elif hdb == True and sale == True:
+        worksheet.write(0, 7, "Price")
 
+    #I
+    if hdb == True:
         worksheet.write(0, 8, "Sqft")
+    elif condo == True and rent == True:
+        worksheet.write(0, 8, "Price")
+    elif condo == True and sale == True:
+        worksheet.write(0, 8, "Psf")
+
+    #J
+    if condo == True:
+        worksheet.write(0, 9, "PPG Link")
+    elif hdb == True and rent == True:
+        worksheet.write(0, 9, "Price")
+    elif hdb == True and sale == True:
         worksheet.write(0, 9, "Psf")
+
+    #K
+    if condo == True:
+        worksheet.write(0, 10, "PPG ID")
+    elif hdb == True:
         worksheet.write(0, 10, "PPG Link")
-        worksheet.write(0, 11, "PPG Link ID")
+
+    #L
+    if hdb == True:
+        worksheet.write(0, 11, "PPG ID")
 
     exit_main = False
     counter = 0
