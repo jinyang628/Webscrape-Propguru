@@ -11,25 +11,72 @@ import requests
 import re
 
 s = Service(ChromeDriverManager().install())
-browser = webdriver.Chrome(service=s)
 
 def task(url_submission):
-    browser.get(url_submission)
-    page = requests.get(url_submission)
+    global browser
+
     soup = BeautifulSoup(browser.page_source, "html.parser")
-    price = (soup.find("span", {"class":"element-label price"})).text.strip()
-    bedroom_number = (soup.find("div", {"class":"property-info-element beds"})).text.strip()
-    bathroom_number = (soup.find("div", {"class":"property-info-element baths"})).text.strip()
-    floor_size_scout = (soup.find("div", {"class":"property-info-element area"})).text.strip()
-    floor_size = ""
-    for char in floor_size_scout:
+    try:
+        price = (soup.find("span", {"class":"element-label price"})).text.strip()
+    except AttributeError:
+        price = ""
+
+    try:
+        bedroom_number = (soup.find("div", {"class":"property-info-element beds"})).text.strip()
+    except AttributeError:
+        bedroom_number = ""
+
+    try:
+        bathroom_number = (soup.find("div", {"class":"property-info-element baths"})).text.strip()
+    except AttributeError:
+        bathroom_number = ""
+
+    try:
+        floor_size_scout = (soup.find("div", {"class":"property-info-element area"})).text.strip()
+        floor_size = ""
+        for char in floor_size_scout:
+            if char.isdigit():
+                floor_size += char
+    except AttributeError:
+        floor_size = ""
+
+    try:
+        floor_level_scout1 = (soup.find("tr", {"class": "property-attr floor-level"}))
+        floor_level_scout2 = floor_level_scout1.find(class_ = "value-block").text.strip()
+        floor_level_scout_list = floor_level_scout2.split(" ")
+        floor_level = floor_level_scout_list[0]
+    except AttributeError:
+        floor_level = ""
+
+    try:
+        block_number_scout = (soup.find("span", {"itemprop":"streetAddress"})).text.strip()
+        block_number = (block_number_scout.split(" "))[0]
+    except AttributeError:
+        block_number = ""
+
+    if block_number == "":
+        try:
+            block_number_scout = (soup.find("div", {"class":"listing-title text-transform-none"})).text.strip()
+            block_number_scout_list = block_number_scout.split(" ")
+            block_number = block_number_scout_list[1]
+        except AttributeError:
+            block_number = ""
+
+    modified_price = ""
+    for char in price:
         if char.isdigit():
-            floor_size += char
-    floor_level_scout = (soup.find("tr", {"class": "property-attr floor-level"}))
-    floor_level = floor_level_scout.find(class_ = "value-block").text.strip()
-    block_number_scout = (soup.find("span", {"itemprop":"streetAddress"})).text.strip()
-    block_number = (block_number_scout.split(" "))[0]
-    psf = round(int(price)/int(floor_size))
+            modified_price += char
+
+    try:
+        psf = round(int(modified_price)/int(floor_size))
+    except AttributeError:
+        psf = ""
+
+    if hdb == True:
+        ppg_link_scout_list = url_submission.split("-")
+        ppg_link_id = ppg_link_scout_list[-1]
+    elif condo == True:
+        ppg_link_id = url_submission[40:48]
 
     print(f"Price: {price}")
     print(f"Bedroom number: {bedroom_number}")
@@ -38,23 +85,28 @@ def task(url_submission):
     print(f"Floor level: {floor_level}")
     print(f"Block number: {block_number}")
     print(f"PSF: {psf}")
+    print(f"PPG Link ID: {ppg_link_id}")
+    print()
 
-    return [bedroom_number, bathroom_number, block_number, floor_level, price, floor_size, psf, url_submission]
+    browser.close()
+
+    return [bedroom_number, bathroom_number, block_number, floor_level, price, floor_size, psf, url_submission, ppg_link_id]
 
 def write_in_excel_row(number):
     global worksheet
     global info_list
+    global condo
+    global hdb
+    global rent
+    global sale
 
-    # LISTING ID
     worksheet.write(number, 0, number)
 
-    # AGENT
-    worksheet.write(number, 1, "Competitor")
+    if hdb == True or (condo == True and rent == True):
+        worksheet.write(number, 1, "Competitor")
 
-    # BEDROOMS
     worksheet.write(number, 2, info_list[0])
 
-    # BATHROOMS
     worksheet.write(number, 3, info_list[1])
 
     # BLOCK NUMBER
@@ -78,14 +130,56 @@ def write_in_excel_row(number):
     worksheet.write(number, 10, info_list[7])
 
     # PPG LINK ID CORRECT
-    list_of_listing_id_column_rowcounter = 0
-    for entry in list_of_listing_id:
-        list_of_listing_id_column_rowcounter += 1
-        worksheet.write(list_of_listing_id_column_rowcounter, 11, entry)
+    worksheet.write(number, 11, info_list[8])
 
 def webscrape():
+    global browser
     global worksheet
     global info_list
+    global condo
+    global hdb
+    global rent
+    global sale
+
+    condo = False
+    hdb = False
+    rent = False
+    sale = False
+
+    condo_or_hdb_query = False
+    while condo_or_hdb_query == False:
+        question = input(
+f"""
+Are you searching for Condo or HDB? 
+Enter 1 for Condo and 2 for HDB
+"""
+        )
+        if question == "1":
+            condo = True
+            condo_or_hdb_query = True
+        elif question == "2":
+            hdb = True
+            condo_or_hdb_query = True
+        else:
+            print("INVALID INPUT: Enter 1 for Condo and 2 for HDB")
+
+    rent_or_sale_query = False
+    while rent_or_sale_query == False:
+        question = input(
+f"""
+Are you searching for Rent or Sale?
+Enter 1 for Rent and 2 for Sale 
+"""
+        )
+        if question == "1":
+            rent = True
+            rent_or_sale_query = True
+        elif question == "2":
+            sale = True
+            rent_or_sale_query = True
+        else:
+            print("INVALID INPUT: Enter 1 for Rent and 2 for Sale")
+
 
     exit_URL_entry = False
     counter = 0
@@ -99,9 +193,6 @@ If you have finished submitting all your URLs, enter DONE
 """)
         if url.upper() != "DONE":
             list_of_URLs.append(url)
-
-            #For checking purposes (might need to allow user to go back and change their previous inputs?)
-            print(list_of_URLs)
         else:
             exit_URL_entry = True
 
@@ -116,26 +207,68 @@ If you have finished submitting all your URLs, enter DONE
     worksheet = workbook.add_worksheet("Data")
 
     # Fill up headers
-    worksheet.write(0, 0, "Listing ID")
-    worksheet.write(0, 1, "Agent")
-    worksheet.write(0, 2, "Bedrooms")
-    worksheet.write(0, 3, "Bathrooms")
-    worksheet.write(0, 4, "Block")
-    worksheet.write(0, 5, "Floor")
-    worksheet.write(0, 6, "Condition")
-    worksheet.write(0, 7, "Price")
-    worksheet.write(0, 8, "Sqft")
-    worksheet.write(0, 9, "Psf")
-    worksheet.write(0, 10, "PPG Link")
-    worksheet.write(0, 11, "PPG Link ID")
+    if hdb == True and sale == True:
+        #A
+        worksheet.write(0, 0, "Listing ID")
+
+        #B
+        if hdb == True or (condo == True and rent == True):
+            worksheet.write(0, 1, "Agent")
+        elif condo == True and sale == True:
+            worksheet.write(0, 1, "Development")
+
+        #C
+        worksheet.write(0, 2, "Bedrooms")
+
+        #D
+        worksheet.write(0, 3, "Bathrooms")
+
+        #E
+        if hdb == True:
+            worksheet.write(0, 4, "Block")
+        elif condo == True and rent == True:
+            worksheet.write(0, 4, "Development")
+        elif condo == True and sale == True:
+            worksheet.write(0, 4, "Floor")
+
+        #F
+        if rent == True:
+            worksheet.write(0, 5, "Furnishing")
+        elif hdb == True and sale == True:
+            worksheet.write(0, 5, "Floor")
+        elif condo == True and sale == True:
+            worksheet.write(0, 5, "Condition")
+
+        #G
+        if hdb == True:
+            worksheet.write(0, 6, "Condition")
+        elif condo == True and rent == True:
+            worksheet.write(0, 6, "Floor Level")
+        elif condo == True and sale == True:
+            worksheet.write(0, 6, "Price")
+
+        #H
+        if hdb == True and rent == True:
+            worksheet.write(0, 7, "Floor")
+
+        worksheet.write(0, 8, "Sqft")
+        worksheet.write(0, 9, "Psf")
+        worksheet.write(0, 10, "PPG Link")
+        worksheet.write(0, 11, "PPG Link ID")
 
     exit_main = False
     counter = 0
     while exit_main == False:
+        browser = webdriver.Chrome(service=s)
+        browser.get(list_of_URLs[counter])
         info_list = task(list_of_URLs[counter])
         counter += 1
+        write_in_excel_row(counter)
         if counter == len(list_of_URLs):
             exit_main = True
-        write_in_excel_row(counter)
+
+    workbook.close()
 
     browser.quit()
+
+webscrape()
