@@ -1,0 +1,54 @@
+from bs4 import BeautifulSoup
+import selenium
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
+import xlsxwriter  # NOTE: MUST USE MODULES THAT SUPPORT XLSX FORMAT (AND NOT XLS)
+import requests
+
+s = Service(ChromeDriverManager().install())
+
+def generate_valuation():
+    postal_code_exit = False
+    while postal_code_exit == False:
+        postal_code_query = input("Enter postal code: ")
+        if len(postal_code_query) == 6:
+            print(f"You have entered {postal_code_query}")
+            postal_code_exit = True
+        else:
+            print("You did not key in a valid postal code")
+        print()
+
+    #Urbanzoom
+    browser = webdriver.Chrome(service=s)
+    browser.get("https://www.urbanzoom.com/zoom-value")
+    browser.find_element_by_xpath("/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[1]/div/div/div[1]/div[2]/div/input").send_keys(postal_code_query)
+
+"""
+    #srx
+    browser = webdriver.Chrome(service=s)
+    browser.get("https://www.srx.com.sg/xvalue-pricing")
+    
+
+    browser.close()
+
+    #Jetval
+    browser = webdriver.Chrome(service=s)
+    browser.get("https://store.jetval.com/")
+
+    browser.close()
+    
+
+    floor_number_query = input(
+
+Enter floor number
+Note: If single digit floor number, DO NOT put a 0 in front  
+)
+
+    stack_number_query = input("Enter stack number: ")
+"""
+
+
+
+generate_valuation()
