@@ -3,13 +3,35 @@ import selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+import time
+from selenium.webdriver.common.keys import Keys
 
 import xlsxwriter  # NOTE: MUST USE MODULES THAT SUPPORT XLSX FORMAT (AND NOT XLS)
 import requests
 
+
+
 s = Service(ChromeDriverManager().install())
 
+condo = False
+hdb = False
+
 def generate_valuation():
+    global condo
+    global hdb #test with 141083, 21-158
+
+    hdb_or_condo_exit = False
+    while hdb_or_condo_exit == False:
+        hdb_or_condo_query = input("Enter 1 for Condo and 2 for HDB: ")
+        if hdb_or_condo_query == "1":
+            condo = True
+            hdb_or_condo_exit = True
+        elif hdb_or_condo_query == "2":
+            hdb = True
+            hdb_or_condo_exit = True
+        else:
+            print("Invalid input (Please enter 1 for Condo and 2 for HDB)")
+
     postal_code_exit = False
     while postal_code_exit == False:
         postal_code_query = input("Enter postal code: ")
@@ -20,10 +42,24 @@ def generate_valuation():
             print("You did not key in a valid postal code")
         print()
 
+    floor_number_query = input("Enter floor number: ")
+    stack_number_query = input("Enter stack number: ")
+
     #Urbanzoom
     browser = webdriver.Chrome(service=s)
     browser.get("https://www.urbanzoom.com/zoom-value")
-    browser.find_element_by_xpath("/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[1]/div/div/div[1]/div[2]/div/input").send_keys(postal_code_query)
+    browser.find_element_by_xpath(
+        "/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[1]/div/div/div[1]/div[2]/div/input").send_keys(
+        postal_code_query)
+    time.sleep(2)
+    browser.find_element_by_xpath(
+        "/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[1]/div/div[2]/div/div/div[2]/div").click()
+
+    if hdb == True:
+        browser.find_element_by_xpath("/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[2]/div/div[1]/input").send_keys(floor_number_query)
+        browser.find_element_by_xpath("/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[2]/div/div[2]/input").send_keys((stack_number_query))
+        browser.find_element_by_xpath("/html/body/div[2]/div/div[4]/div[2]/div/div/form/div[2]/div/div[3]/div/div").click()
+
 
 """
     #srx
@@ -40,13 +76,7 @@ def generate_valuation():
     browser.close()
     
 
-    floor_number_query = input(
-
-Enter floor number
-Note: If single digit floor number, DO NOT put a 0 in front  
-)
-
-    stack_number_query = input("Enter stack number: ")
+    
 """
 
 
